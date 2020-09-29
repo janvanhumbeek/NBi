@@ -5,6 +5,8 @@ using System.Linq;
 using Microsoft.AnalysisServices.AdomdClient;
 using NBi.Core.Analysis.Request;
 using System.Data;
+using NBi.Core.Query.Client;
+using NBi.Extensibility;
 
 namespace NBi.Core.Analysis.Member
 {
@@ -33,14 +35,13 @@ namespace NBi.Core.Analysis.Member
 
         protected void Inform(string text)
         {
-            if (ProgressStatusChanged != null)
-                ProgressStatusChanged(this, new ProgressStatusEventArgs(text));
+            ProgressStatusChanged?.Invoke(this, new ProgressStatusEventArgs(text));
         }
 
         protected IDbCommand CreateCommand()
         {
-            var factory = new ConnectionFactory();
-            var conn = factory.Get(ConnectionString);
+            var factory = new ClientProvider();
+            var conn = factory.Instantiate(ConnectionString).CreateNew() as IDbConnection;
             
             var cmd = conn.CreateCommand();
             return cmd;
@@ -178,7 +179,7 @@ namespace NBi.Core.Analysis.Member
             var commandText = string.Empty;
             commandText = string.Format("select {0} on 0, {1} on 1 from [{2}]", "{}", members, perspective);
 
-            Trace.WriteLineIf(NBiTraceSwitch.TraceInfo, commandText);
+            Trace.WriteLineIf(Extensibility.NBiTraceSwitch.TraceInfo, commandText);
             return commandText;
         }
 

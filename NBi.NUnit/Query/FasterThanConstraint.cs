@@ -2,38 +2,23 @@
 using System.Data;
 using NBi.Core.Query;
 using NUnitCtr = NUnit.Framework.Constraints;
+using NBi.Core.Query.Performance;
+using NBi.Extensibility.Query;
 
 namespace NBi.NUnit.Query
 {
     public class FasterThanConstraint : NBiConstraint
     {
-        protected IQueryPerformance engine;
-        /// <summary>
-        /// Engine dedicated to ResultSet comparaison
-        /// </summary>
-        protected internal IQueryPerformance Engine
-        {
-            set
-            {
-                if (value == null)
-                    throw new ArgumentNullException();
-                engine = value;
-            }
-        }
-        
-        /// <summary>
-        /// Store for the result of the engine's execution
-        /// </summary>
-        protected PerformanceResult performanceResult;
-
-        protected int maxTimeMilliSeconds;
-        protected int timeOutMilliSeconds;
-        protected bool cleanCache;
+        private PerformanceResult performanceResult;
+        private int maxTimeMilliSeconds;
+        private int timeOutMilliSeconds;
+        private bool cleanCache;
+        private IPerformanceEngine engine;
+        protected internal IPerformanceEngine Engine
+        { set => engine = value ?? throw new ArgumentNullException(); }
 
         public FasterThanConstraint()
-        {
-
-        }
+        { }
 
         public FasterThanConstraint MaxTimeMilliSeconds(int value)
         {
@@ -49,16 +34,12 @@ namespace NBi.NUnit.Query
 
         public FasterThanConstraint CleanCache()
         {
-            this.cleanCache = true;
+            cleanCache = true;
             return this;
         }
 
-        protected IQueryPerformance GetEngine(IDbCommand actual)
-        {
-            if (engine == null)
-                engine = new QueryEngineFactory().GetPerformance(actual);
-            return engine;
-        }
+        protected IPerformanceEngine GetEngine(IQuery actual)
+         => engine ?? (engine = new PerformanceEngineFactory().Instantiate(actual));
 
         /// <summary>
         /// Handle a sql string or a sqlCommand and check it with the engine
@@ -67,27 +48,22 @@ namespace NBi.NUnit.Query
         /// <returns>true, if the query defined in parameter is executed in less that expected else false</returns>
         public override bool Matches(object actual)
         {
-            if (actual is IDbCommand)
-                return doMatch((IDbCommand)actual);
+            if (actual is IQuery)
+                return doMatch((IQuery)actual);
             else
                 return false;
         }
 
-        /// <summary>
-        /// Handle a sql string and check it with the engine
-        /// </summary>
-        /// <param name="actual">SQL string</param>
-        /// <returns>true, if the query defined in parameter is executed in less that expected else false</returns>
-        public bool doMatch(IDbCommand actual)
+        public bool doMatch(IQuery actual)
         {
             var engine = GetEngine(actual);
             if (cleanCache)
                 engine.CleanCache();
-            performanceResult = engine.CheckPerformance(timeOutMilliSeconds);
-            return 
+            performanceResult = engine.Execute(new TimeSpan(0, 0, 0, 0, timeOutMilliSeconds));
+            return
                 (
                     performanceResult.TimeElapsed.TotalMilliseconds < maxTimeMilliSeconds
-                    && ! performanceResult.IsTimeOut
+                    && !performanceResult.IsTimeOut
                 );
         }
 
@@ -100,10 +76,10 @@ namespace NBi.NUnit.Query
             var sb = new System.Text.StringBuilder();
             sb.AppendLine("Execution of the query is slower than expected");
             sb.AppendFormat("Maximum expected was {0}ms", maxTimeMilliSeconds);
-            writer.WritePredicate(sb.ToString());           
+            writer.WritePredicate(sb.ToString());
         }
 
-        public override void  WriteActualValueTo(NUnitCtr.MessageWriter writer)
+        public override void WriteActualValueTo(NUnitCtr.MessageWriter writer)
         {
             if (performanceResult.IsTimeOut)
                 writer.WriteActualValue(string.Format("query interrupted after {0}ms (timeout)", performanceResult.TimeOut));

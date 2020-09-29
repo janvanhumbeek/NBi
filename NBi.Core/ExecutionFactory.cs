@@ -1,21 +1,21 @@
 ﻿using System;
 using System.Linq;
 using NBi.Core.Etl;
+using NBi.Extensibility;
+using NBi.Core.Decoration.DataEngineering;
+using NBi.Extensibility.Decoration.DataEngineering;
 
 namespace NBi.Core
 {
     public class ExecutionFactory
     {
-        public IExecution Get(IExecutable executable)
+        public IExecutable Instantiate(IExecutableArgs args)
         {
-            if (executable is IEtl)
+            switch (args)
             {
-                var factory = new EtlRunnerFactory();
-                var instance = factory.Get(executable as IEtl);
-                return instance;
+                case IEtlArgs etl: return new EtlRunnerProvider().Instantiate(etl.Version).Instantiate(etl);
+                default:throw new ArgumentException();
             }
-            else
-                throw new ArgumentException();
         }
     }
 }

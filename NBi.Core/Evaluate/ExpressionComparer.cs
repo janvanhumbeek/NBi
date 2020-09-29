@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Linq;
 using NBi.Core.ResultSet;
-using NBi.Core.ResultSet.Comparer;
+using NBi.Core.Scalar.Comparer;
 
 namespace NBi.Core.Evaluate
 {
@@ -12,7 +12,7 @@ namespace NBi.Core.Evaluate
         public bool Equal(Object x, Object y, ColumnType type, string tolerance)
         {
             var comparer = new ComparerFactory().Get(type);
-            var res = comparer.Compare(x, y, ToleranceFactory.Instantiate(type, tolerance));
+            var res = comparer.Compare(x, y, new ToleranceFactory().Instantiate(type, tolerance));
             return res.AreEqual;
         }
 

@@ -6,12 +6,18 @@ using NBi.Core.Query;
 using NBi.Xml.Constraints;
 using NBi.Xml.Items;
 using NBi.Xml.Systems;
+using NBi.Core.ResultSet;
+using NBi.Core.ResultSet.Resolver;
+using NBi.NUnit.Builder.Helper;
+using NBi.Core.Query.Resolver;
+using NBi.Core.Query.Command;
+using NBi.Extensibility.Query;
 
 namespace NBi.NUnit.Builder
 {
     abstract class AbstractExecutionBuilder : AbstractTestCaseBuilder
     {
-        protected ExecutionXml SystemUnderTestXml { get; set; }
+        protected AbstractSystemUnderTestXml SystemUnderTestXml { get; set; }
 
         protected override void BaseSetup(AbstractSystemUnderTestXml sutXml, AbstractConstraintXml ctrXml)
         {
@@ -23,30 +29,25 @@ namespace NBi.NUnit.Builder
 
         protected override void BaseBuild()
         {
-            SystemUnderTest = InstantiateSystemUnderTest(SystemUnderTestXml);
+            SystemUnderTest = InstantiateSystemUnderTest((ExecutionXml)SystemUnderTestXml);
         }
 
-        protected virtual IDbCommand InstantiateSystemUnderTest(ExecutionXml executionXml)
+        protected virtual IQuery InstantiateSystemUnderTest(ExecutionXml executionXml)
         {
-            var commandBuilder = new CommandBuilder();
+            var query = GetQuery(executionXml);
+            return query;
+        }
 
-            var connectionString = executionXml.Item.GetConnectionString();
-            var commandText = (executionXml.Item as QueryableXml).GetQuery();
+        protected virtual IQuery GetQuery(ExecutionXml executionXml)
+        {
+            var builder = new QueryResolverArgsBuilder(ServiceLocator);
+            builder.Setup(executionXml.Item, executionXml.Settings, Variables);
+            builder.Build();
 
-            IEnumerable<IQueryParameter> parameters=null;
-            IEnumerable<IQueryTemplateVariable> variables = null;
-            if (executionXml.BaseItem is QueryXml)
-            { 
-                parameters = ((QueryXml)executionXml.BaseItem).GetParameters();
-                variables = ((QueryXml)executionXml.BaseItem).GetVariables();
-            }
-            if (executionXml.BaseItem is ReportXml)
-            {
-                parameters = ((ReportXml)executionXml.BaseItem).GetParameters();
-            }
-            var cmd = commandBuilder.Build(connectionString, commandText, parameters, variables);
-
-            return cmd;
+            var factory = ServiceLocator.GetQueryResolverFactory();
+            var resolver = factory.Instantiate(builder.GetArgs());
+            var query = resolver.Execute();
+            return query;
         }
 
 

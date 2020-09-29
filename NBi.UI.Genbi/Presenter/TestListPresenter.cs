@@ -3,13 +3,15 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Linq;
-using NBi.Service;
-using NBi.Service.Dto;
+using NBi.GenbiL.Stateful;
 using NBi.UI.Genbi.Command;
 using NBi.UI.Genbi.Command.Test;
 using NBi.UI.Genbi.Command.TestsXml;
 using NBi.UI.Genbi.Stateful;
 using NBi.UI.Genbi.View.TestSuiteGenerator;
+using NBi.GenbiL.Templating;
+using NBi.UI.Genbi.Service;
+using NBi.IO.Genbi.Dto;
 
 namespace NBi.UI.Genbi.Presenter
 {
@@ -18,7 +20,7 @@ namespace NBi.UI.Genbi.Presenter
         private readonly TestListManager testListManager;
         public bool IsUndo { get; private set; }
 
-        public TestListPresenter(TestListManager testListManager, LargeBindingList<Test> tests, DataTable testCases, BindingList<string> variables, string template)
+        public TestListPresenter(TestListManager testListManager, LargeBindingList<Test> tests, DataTable testCases, BindingList<string> variables, string template, IDictionary<string, object> globalVariables)
         {
             this.ClearTestsXmlCommand = new ClearTestListCommand(this);
             this.GenerateTestsXmlCommand = new GenerateTestListCommand(this);
@@ -34,6 +36,7 @@ namespace NBi.UI.Genbi.Presenter
             TestCases = testCases;
             Variables = variables;
             Template = template;
+            GlobalVariables = globalVariables;
 
             testListManager.Progressed += (sender, e) => 
             {
@@ -89,6 +92,12 @@ namespace NBi.UI.Genbi.Presenter
         {
             get { return GetValue<string>("Template"); }
             set { SetValue("Template", value); }
+        }
+
+        public IDictionary<string, object> GlobalVariables
+        {
+            get { return GetValue<IDictionary<string, object>>("GlobalVariables"); }
+            set { SetValue("GlobalVariables", value); }
         }
 
         public bool UseGrouping
@@ -151,7 +160,7 @@ namespace NBi.UI.Genbi.Presenter
             {
                 Progress = 0;
                 OnGenerationStarted(EventArgs.Empty);
-                testListManager.Build(Template, Variables.ToArray(), TestCases, UseGrouping);
+                testListManager.Build(Template, Variables.ToArray(), TestCases, UseGrouping, GlobalVariables);
                 Progress = 100;
                 IsUndo = true;
                 ReloadTests();
@@ -210,18 +219,14 @@ namespace NBi.UI.Genbi.Presenter
 
         protected void OnGenerationStarted(EventArgs e)
         {
-            EventHandler<EventArgs> handler = GenerationStarted;
-            if (handler != null)
-                handler(this, e);
+            GenerationStarted?.Invoke(this, e);
         }
 
         public event EventHandler<EventArgs> GenerationEnded;
 
         protected void OnGenerationEnded(EventArgs e)
         {
-            EventHandler<EventArgs> handler = GenerationEnded;
-            if (handler != null)
-                handler(this, e);
+            GenerationEnded?.Invoke(this, e);
         }
 
         internal void Refresh()

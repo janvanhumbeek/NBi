@@ -5,7 +5,7 @@ using System.Linq;
 using System.Xml.Serialization;
 using NBi.Core;
 using NBi.Core.ResultSet;
-using NBi.Core.ResultSet.Comparer;
+using NBi.Core.Scalar.Comparer;
 using NBi.Xml.Items;
 using NBi.Xml.Items.ResultSet;
 using NBi.Xml.Settings;
@@ -53,15 +53,15 @@ namespace NBi.Xml.Constraints
             }
         }
 
-        [XmlElement("less-than")]
+        [XmlElement("less-than", Order = 1)]
         public LessThanXml LessThan { get; set; }
-        [XmlElement("equal")]
+        [XmlElement("equal", Order = 2)]
         public EqualXml Equal { get; set; }
-        [XmlElement("more-than")]
+        [XmlElement("more-than", Order = 3)]
         public MoreThanXml MoreThan { get; set; }
 
         [XmlIgnore]
-        public AbstractComparerXml Comparer
+        public PredicateXml Comparer
         {
             get
             {
@@ -75,7 +75,7 @@ namespace NBi.Xml.Constraints
             }
         }
 
-        [XmlElement("filter")]
+        [XmlElement("filter", Order = 0)]
         public FilterXml Filter { get; set; }
     }
 }

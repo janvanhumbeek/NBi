@@ -4,24 +4,26 @@
 Display skipped.
 
   But was:  
-ResultSet with 1 row
+Result-set with 1 row
 
-     KEY (Numeric)  (+/- 0) | VALUE (Text)
-     ---------------------- | ------------ 
-     1                      | A           
+     #0 (Column1)  | #1 (Column2)
+     KEY (Numeric) | VALUE (Text)
+     ------------- | ------------ 
+     1             | A           
 
 
 
 Missing rows:
 -------------
 
-ResultSet with 25 rows
+Result-set with 25 rows
 
-     KEY (Numeric)  (+/- 0) | VALUE (Text)
-     ---------------------- | ------------ 
-     2                      | B           
-     3                      | C           
-     4                      | D           
+     #0 (Number)   | #1 (Column1)
+     KEY (Numeric) | VALUE (Text)
+     ------------- | ------------ 
+     2             | B           
+     3             | C           
+     4             | D           
 
 22 (of 25) rows have been skipped for display purpose.
 

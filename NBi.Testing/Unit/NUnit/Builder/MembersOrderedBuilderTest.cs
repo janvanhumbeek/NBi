@@ -20,14 +20,14 @@ namespace NBi.Testing.Unit.NUnit.Builder
 
         #region SetUp & TearDown
         //Called only at instance creation
-        [TestFixtureSetUp]
+        [OneTimeSetUp]
         public void SetupMethods()
         {
 
         }
 
         //Called only at instance destruction
-        [TestFixtureTearDown]
+        [OneTimeTearDown]
         public void TearDownMethods()
         {
         }
@@ -48,9 +48,7 @@ namespace NBi.Testing.Unit.NUnit.Builder
         [Test]
         public void GetConstraint_Build_CorrectConstraint()
         {
-            var sutXml = new MembersXml();
-            var item = new HierarchyXml();
-            sutXml.Item = item;
+            var sutXml = new MembersXml() { Item = new HierarchyXml() { ConnectionString = "connStr" } };
             var ctrXml = new OrderedXml();
 
             var discoFactoStubFactory = new Mock<DiscoveryRequestFactory>();
@@ -79,16 +77,25 @@ namespace NBi.Testing.Unit.NUnit.Builder
         public void GetSystemUnderTest_ConnectionStringInDefault_CorrectlyInitialized()
         {           
             var sutXml = new MembersXml();
-            
-            var item = new HierarchyXml();
-            sutXml.Item = item;
-            item.Perspective = "perspective";
-            item.Dimension = "dimension";
-            item.Caption = "hierarchy";
 
-            var defXml = new DefaultXml();
-            defXml.ConnectionString = "connectionString-default";
-            sutXml.Default = defXml;
+            var item = new HierarchyXml()
+            {
+                Perspective = "perspective",
+                Dimension = "dimension",
+                Caption = "hierarchy",
+                Settings = new SettingsXml()
+                {
+                    Defaults = new List<DefaultXml>()
+                    {
+                        new DefaultXml()
+                        {
+                            ApplyTo = SettingsXml.DefaultScope.SystemUnderTest,
+                            ConnectionString = new ConnectionStringXml() { Inline = "connectionString-default" }
+                        }
+                    }
+                }
+            };
+            sutXml.Item = item;
 
             var ctrXml = new OrderedXml();
 

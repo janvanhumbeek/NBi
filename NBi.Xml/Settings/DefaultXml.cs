@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Xml.Serialization;
 using NBi.Xml.Items;
 
@@ -9,8 +10,23 @@ namespace NBi.Xml.Settings
         [XmlAttribute("apply-to")]
         public SettingsXml.DefaultScope ApplyTo { get; set; }
 
-        [XmlElement ("connectionString")]
-        public string ConnectionString { get; set; }
+        [XmlElement ("connection-string")]
+        public ConnectionStringXml ConnectionString { get; set; }
+
+        [Obsolete("Replaced by connection-string")]
+        [XmlIgnore]
+        public ConnectionStringXml ConnectionStringOld
+        {
+            get => ConnectionString;
+            set { ConnectionString = value; }
+        }
+
+        [XmlIgnore]
+        public bool ConnectionStringSpecified
+        {
+            get { return !string.IsNullOrEmpty(ConnectionString.Inline) || ConnectionString.Environment!=null; }
+            set { return; }
+        }
 
         [XmlElement("parameter")]
         public List<QueryParameterXml> Parameters { get; set; }
@@ -28,6 +44,16 @@ namespace NBi.Xml.Settings
             set { return; }
         }
 
+        [XmlElement("etl")]
+        public EtlBaseXml Etl { get; set; }
+
+        [XmlIgnore]
+        public bool EtlSpecified
+        {
+            get { return !Etl.IsEmpty(); }
+            set { return; }
+        }
+
         public DefaultXml(SettingsXml.DefaultScope applyTo) : this()
         {
             ApplyTo = applyTo;
@@ -35,10 +61,14 @@ namespace NBi.Xml.Settings
 
         public DefaultXml()
         {
+            ConnectionString = new ConnectionStringXml();
             Parameters = new List<QueryParameterXml>();
             Variables = new List<QueryTemplateVariableXml>();
             Report = new ReportBaseXml();
+            Etl = new EtlBaseXml();
         }
+
+
 
     }
 }

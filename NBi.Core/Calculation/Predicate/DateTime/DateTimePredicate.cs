@@ -1,4 +1,5 @@
-﻿using NBi.Core.ResultSet.Converter;
+﻿using NBi.Core.Scalar.Casting;
+using NBi.Core.Scalar.Resolver;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,17 +8,20 @@ using System.Threading.Tasks;
 
 namespace NBi.Core.Calculation.Predicate.DateTime
 {
-    abstract class DateTimePredicate : IPredicate
+    abstract class DateTimePredicate : AbstractPredicateReference
     {
-        public bool Compare(object x, object y)
+        public DateTimePredicate(bool not, IScalarResolver reference) : base(not, reference)
+        { }
+
+        protected override bool ApplyWithReference(object reference, object x)
         {
-            var converter = new DateTimeConverter();
-            var dtX = converter.Convert(x);
-            var dtY = converter.Convert(y);
+            var caster = new DateTimeCaster();
+            var dtX = caster.Execute(x);
+            var dtY = caster.Execute(reference);
 
             return Compare(dtX, dtY);
         }
 
-        public abstract bool Compare(System.DateTime x, System.DateTime y);
+        protected abstract bool Compare(System.DateTime x, System.DateTime y);
     }
 }

@@ -8,6 +8,12 @@ using NBi.Xml.Constraints;
 using NBi.Xml.Items;
 using NBi.Xml.Systems;
 using NUnit.Framework;
+using NBi.Core.ResultSet;
+using NBi.Core.ResultSet.Resolver;
+using NBi.Core.Query;
+using NBi.Core.Injection;
+using NBi.Extensibility.Query;
+using NBi.Xml.Settings;
 #endregion
 
 namespace NBi.Testing.Unit.NUnit.Builder
@@ -18,14 +24,14 @@ namespace NBi.Testing.Unit.NUnit.Builder
 
         #region SetUp & TearDown
         //Called only at instance creation
-        [TestFixtureSetUp]
+        [OneTimeSetUp]
         public void SetupMethods()
         {
 
         }
 
         //Called only at instance destruction
-        [TestFixtureTearDown]
+        [OneTimeTearDown]
         public void TearDownMethods()
         {
         }
@@ -47,10 +53,11 @@ namespace NBi.Testing.Unit.NUnit.Builder
         public void GetConstraint_Build_CorrectConstraint()
         {
             var sutXmlStubFactory = new Mock<ExecutionXml>(); 
-            var itemXmlStubFactory = new Mock<QueryableXml>();
-            itemXmlStubFactory.Setup(i => i.GetQuery()).Returns("query");
+            var itemXmlStubFactory = new Mock<QueryXml>();
+            itemXmlStubFactory.Setup(i => i.InlineQuery).Returns("query");
+            itemXmlStubFactory.Setup(i => i.Settings).Returns(SettingsXml.Empty);
             itemXmlStubFactory.Setup(i => i.GetParameters()).Returns(new List<QueryParameterXml>());
-            itemXmlStubFactory.Setup(i => i.GetVariables()).Returns(new List<QueryTemplateVariableXml>());
+            itemXmlStubFactory.Setup(i => i.GetTemplateVariables()).Returns(new List<QueryTemplateVariableXml>());
             sutXmlStubFactory.Setup(s => s.Item).Returns(itemXmlStubFactory.Object);
             var sutXml = sutXmlStubFactory.Object;
             sutXml.Item = itemXmlStubFactory.Object;
@@ -58,7 +65,7 @@ namespace NBi.Testing.Unit.NUnit.Builder
             var ctrXml = new MatchPatternXml();
 
             var builder = new ExecutionMatchPatternBuilder();
-            builder.Setup(sutXml, ctrXml);
+            builder.Setup(sutXml, ctrXml, null, null, new ServiceLocator());
             builder.Build();
             var ctr = builder.GetConstraint();
 
@@ -69,10 +76,11 @@ namespace NBi.Testing.Unit.NUnit.Builder
         public void GetSystemUnderTest_Build_CorrectIDbCommand()
         {
             var sutXmlStubFactory = new Mock<ExecutionXml>();
-            var itemXmlStubFactory = new Mock<QueryableXml>();
-            itemXmlStubFactory.Setup(i => i.GetQuery()).Returns("query");
+            var itemXmlStubFactory = new Mock<QueryXml>();
+            itemXmlStubFactory.Setup(i => i.InlineQuery).Returns("query");
+            itemXmlStubFactory.Setup(i => i.Settings).Returns(SettingsXml.Empty);
             itemXmlStubFactory.Setup(i => i.GetParameters()).Returns(new List<QueryParameterXml>());
-            itemXmlStubFactory.Setup(i => i.GetVariables()).Returns(new List<QueryTemplateVariableXml>());
+            itemXmlStubFactory.Setup(i => i.GetTemplateVariables()).Returns(new List<QueryTemplateVariableXml>());
             sutXmlStubFactory.Setup(s => s.Item).Returns(itemXmlStubFactory.Object);
             var sutXml = sutXmlStubFactory.Object;
             sutXml.Item = itemXmlStubFactory.Object;
@@ -80,11 +88,11 @@ namespace NBi.Testing.Unit.NUnit.Builder
             var ctrXml = new MatchPatternXml();
 
             var builder = new ExecutionMatchPatternBuilder();
-            builder.Setup(sutXml, ctrXml);
+            builder.Setup(sutXml, ctrXml, null, null, new ServiceLocator());
             builder.Build();
             var sut = builder.GetSystemUnderTest();
 
-            Assert.That(sut, Is.InstanceOf<IDbCommand>());
+            Assert.That(sut, Is.InstanceOf<IQuery>());
         }
 
     }

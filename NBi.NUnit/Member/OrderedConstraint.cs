@@ -8,6 +8,11 @@ using NUnitCtr = NUnit.Framework.Constraints;
 using NBi.Framework;
 using System.Data;
 using NBi.Core.ResultSet;
+using NBi.Core.Query.Resolver;
+using NBi.Core.Query;
+using System.Linq;
+using NBi.Core.Query.Execution;
+using NBi.Extensibility.Query;
 
 namespace NBi.NUnit.Member
 {
@@ -15,7 +20,7 @@ namespace NBi.NUnit.Member
 	{
 		private bool reversed;
 		private IList<object> specific;
-        private IDbCommand command;
+        private IQuery query;
 
 		/// <summary>
 		/// Construct a CollectionContainsConstraint specific for Members
@@ -85,9 +90,9 @@ namespace NBi.NUnit.Member
 			return this;
 		}
 
-        public OrderedConstraint Specific(IDbCommand command)
+        public OrderedConstraint Specific(IQuery query)
         {
-            this.command = command;
+            this.query = query;
             Comparer = null;
             return this;
         }
@@ -139,20 +144,17 @@ namespace NBi.NUnit.Member
         protected override void PreInitializeMatching()
         {
             base.PreInitializeMatching();
-            if (command != null)
-                specific = GetMembersFromResultSet(command);
+            if (query is IQuery)
+                specific = GetMembersFromResultSet(query as IQuery);
         }
 
-        protected IList<object> GetMembersFromResultSet(Object obj)
+        protected IList<object> GetMembersFromResultSet(IQuery query)
         {
-            var resultSetBuilder = new ResultSetBuilder();
-            var rs = resultSetBuilder.Build(obj);
+            var engineFactory = new ExecutionEngineFactory();
+            var qe = engineFactory.Instantiate(query);
+            var members = qe.ExecuteList<string>();
 
-            var members = new List<object>();
-            foreach (DataRow row in rs.Rows)
-                members.Add(row.ItemArray[0].ToString());
-
-            return members;
+            return members.Cast<object>().ToList();
         }
 
 		/// <summary>
@@ -224,8 +226,7 @@ namespace NBi.NUnit.Member
 					return DateTime.Compare((DateTime)x,(DateTime)y);
 				if (x is DateTime && y is String)
 				{
-					DateTime newY;
-					if (DateTime.TryParse((string)y, out newY))
+					if (DateTime.TryParse((string)y, out var newY))
 						return DateTime.Compare((DateTime)x, newY);
 					else
 						return 0;
@@ -233,8 +234,7 @@ namespace NBi.NUnit.Member
 				}
 				if (x is String && y is DateTime)
 				{
-					DateTime newX;
-					if (DateTime.TryParse((string)x, out newX))
+					if (DateTime.TryParse((string)x, out var newX))
 						return DateTime.Compare(newX, (DateTime)y);
 					else
 						return 0;
@@ -242,8 +242,7 @@ namespace NBi.NUnit.Member
 				}
 				if (x is String && y is String)
 				{
-					DateTime newX, newY;
-					if (DateTime.TryParse((string)x, out newX) && DateTime.TryParse((string)y, out newY))
+					if (DateTime.TryParse((string)x, out var newX) && DateTime.TryParse((string)y, out var newY))
 						return DateTime.Compare(newX, newY);
 					else
 						return 0;
@@ -274,8 +273,7 @@ namespace NBi.NUnit.Member
 				x = x is NBi.Core.Analysis.Member.Member ? ((NBi.Core.Analysis.Member.Member)x).Caption : x;
 				y = y is NBi.Core.Analysis.Member.Member ? ((NBi.Core.Analysis.Member.Member)y).Caption : y;
 
-				Decimal newX, newY;
-				if (Decimal.TryParse(x.ToString(), out newX) && Decimal.TryParse(y.ToString(), out newY))
+				if (Decimal.TryParse(x.ToString(), out var newX) && Decimal.TryParse(y.ToString(), out var newY))
 					return Decimal.Compare(newX, newY);
 				else
 					return 0;

@@ -1,12 +1,13 @@
 ﻿using System;
 using System.Linq;
-using NBi.Core.ResultSet.Comparer;
+using NBi.Core.Scalar.Comparer;
+using NBi.Core.Transformation;
 
 namespace NBi.Core.ResultSet
 {
     public class Column : IColumnDefinition
     {
-        public int Index {get; set;} 
+        public IColumnIdentifier Identifier { get; set; }
         public ColumnRole Role {get; set;} 
         public ColumnType Type {get; set;}
 
@@ -19,5 +20,7 @@ namespace NBi.Core.ResultSet
 
         public Rounding.RoundingStyle RoundingStyle { get; set; }
         public string RoundingStep { get; set; }
+
+        public ITransformationInfo Transformation { get; set; }
     }
 }

@@ -5,6 +5,7 @@ using NBi.NUnit;
 using NBi.NUnit.Builder;
 using NBi.NUnit.Member;
 using NBi.NUnit.Query;
+using NBi.NUnit.ResultSetComparison;
 using NBi.NUnit.Structure;
 using NBi.Xml.Constraints;
 using NBi.Xml.Systems;
@@ -13,6 +14,10 @@ using NBi.Framework;
 using NBi.NUnit.DataType;
 using NBi.Core.DataType;
 using NBi.Core.Structure.Relational;
+using System.Collections.Generic;
+using NBi.Core.Variable;
+using NBi.Core.Injection;
+using NBi.NUnit.Scoring;
 
 namespace NBi.Testing.Unit.NUnit
 {
@@ -23,14 +28,11 @@ namespace NBi.Testing.Unit.NUnit
 
         [SetUp]
         public void SetUp()
-        {
-            
-        }
+        { }
 
         [TearDown]
         public void TearDown()
-        {
-        }
+        { }
 
         #endregion
 
@@ -53,7 +55,7 @@ namespace NBi.Testing.Unit.NUnit
             var ctrXml = new SyntacticallyCorrectXml();
 
             var builderMockFactory = new Mock<ITestCaseBuilder>();
-            builderMockFactory.Setup(b => b.Setup(sutXml, ctrXml, TestConfiguration.Default));
+            builderMockFactory.Setup(b => b.Setup(sutXml, ctrXml, NBi.Core.Configuration.Configuration.Default, It.IsAny<Dictionary<string, ITestVariable>>(), It.IsAny<ServiceLocator>()));
             builderMockFactory.Setup(b => b.Build());
             builderMockFactory.Setup(b => b.GetSystemUnderTest()).Returns(new SqlCommand());
             builderMockFactory.Setup(b => b.GetConstraint()).Returns(new SyntacticallyCorrectConstraint());
@@ -66,7 +68,6 @@ namespace NBi.Testing.Unit.NUnit
 
             Assert.That(tc, Is.Not.Null);
             builderMockFactory.VerifyAll();
-
         }
 
         [Test]
@@ -113,7 +114,6 @@ namespace NBi.Testing.Unit.NUnit
             Assert.Throws<ArgumentException>(delegate { testCaseFactory.Instantiate(sutXml, ctrXml); });
         }
 
-
         [Test]
         public void IsHandling_QueryFasterThan_True()
         {
@@ -133,7 +133,7 @@ namespace NBi.Testing.Unit.NUnit
             var ctrXml = new FasterThanXml();
 
             var builderMockFactory = new Mock<ITestCaseBuilder>();
-            builderMockFactory.Setup(b => b.Setup(sutXml, ctrXml, TestConfiguration.Default));
+            builderMockFactory.Setup(b => b.Setup(sutXml, ctrXml, NBi.Core.Configuration.Configuration.Default, It.IsAny<Dictionary<string, ITestVariable>>(), It.IsAny<ServiceLocator>()));
             builderMockFactory.Setup(b => b.Build());
             builderMockFactory.Setup(b => b.GetSystemUnderTest()).Returns(new SqlCommand());
             builderMockFactory.Setup(b => b.GetConstraint()).Returns(new FasterThanConstraint());
@@ -146,7 +146,6 @@ namespace NBi.Testing.Unit.NUnit
 
             Assert.That(tc, Is.Not.Null);
             builderMockFactory.VerifyAll();
-
         }
 
         [Test]
@@ -206,16 +205,28 @@ namespace NBi.Testing.Unit.NUnit
         }
 
         [Test]
+        public void IsHandling_QuerySupersetOf_True()
+        {
+            var sutXml = new ExecutionXml();
+            var ctrXml = new SupersetOfXml();
+            var testCaseFactory = new TestCaseFactory();
+
+            var actual = testCaseFactory.IsHandling(sutXml.GetType(), ctrXml.GetType());
+
+            Assert.That(actual, Is.True);
+        }
+
+        [Test]
         public void Instantiate_QueryEqualTo_TestCase()
         {
             var sutXml = new ExecutionXml();
             var ctrXml = new EqualToXml();
 
             var builderMockFactory = new Mock<ITestCaseBuilder>();
-            builderMockFactory.Setup(b => b.Setup(sutXml, ctrXml, TestConfiguration.Default));
+            builderMockFactory.Setup(b => b.Setup(sutXml, ctrXml, NBi.Core.Configuration.Configuration.Default, It.IsAny<Dictionary<string, ITestVariable>>(), It.IsAny<ServiceLocator>()));
             builderMockFactory.Setup(b => b.Build());
             builderMockFactory.Setup(b => b.GetSystemUnderTest()).Returns(new SqlCommand());
-            builderMockFactory.Setup(b => b.GetConstraint()).Returns(new EqualToConstraint("value"));
+            builderMockFactory.Setup(b => b.GetConstraint()).Returns(new EqualToConstraint(null));
             var builder = builderMockFactory.Object;
 
             var testCaseFactory = new TestCaseFactory();
@@ -225,7 +236,6 @@ namespace NBi.Testing.Unit.NUnit
 
             Assert.That(tc, Is.Not.Null);
             builderMockFactory.VerifyAll();
-
         }
 
         [Test]
@@ -313,7 +323,7 @@ namespace NBi.Testing.Unit.NUnit
             var ctrXml = new ContainXml();
 
             var builderMockFactory = new Mock<ITestCaseBuilder>();
-            builderMockFactory.Setup(b => b.Setup(sutXml, ctrXml, TestConfiguration.Default));
+            builderMockFactory.Setup(b => b.Setup(sutXml, ctrXml, NBi.Core.Configuration.Configuration.Default, It.IsAny<Dictionary<string, ITestVariable>>(), It.IsAny<ServiceLocator>()));
             builderMockFactory.Setup(b => b.Build());
             builderMockFactory.Setup(b => b.GetSystemUnderTest()).Returns(new object());
             builderMockFactory.Setup(b => b.GetConstraint()).Returns(new NBi.NUnit.Member.ContainConstraint("expected"));
@@ -346,7 +356,7 @@ namespace NBi.Testing.Unit.NUnit
             var sutXml = new StructureXml();
             var ctrXml = new ContainXml();
             var builderMockFactory = new Mock<ITestCaseBuilder>();
-            builderMockFactory.Setup(b => b.Setup(sutXml, ctrXml, TestConfiguration.Default));
+            builderMockFactory.Setup(b => b.Setup(sutXml, ctrXml, NBi.Core.Configuration.Configuration.Default, It.IsAny<Dictionary<string, ITestVariable>>(), It.IsAny<ServiceLocator>()));
             builderMockFactory.Setup(b => b.Build());
             builderMockFactory.Setup(b => b.GetSystemUnderTest()).Returns(new object());
             builderMockFactory.Setup(b => b.GetConstraint()).Returns(new NBi.NUnit.Structure.ContainConstraint("expected"));
@@ -402,7 +412,7 @@ namespace NBi.Testing.Unit.NUnit
             var ctrXml = new CountXml();
 
             var builderMockFactory = new Mock<ITestCaseBuilder>();
-            builderMockFactory.Setup(b => b.Setup(sutXml, ctrXml, TestConfiguration.Default));
+            builderMockFactory.Setup(b => b.Setup(sutXml, ctrXml, NBi.Core.Configuration.Configuration.Default, It.IsAny<Dictionary<string, ITestVariable>>(), It.IsAny<ServiceLocator>()));
             builderMockFactory.Setup(b => b.Build());
             builderMockFactory.Setup(b => b.GetSystemUnderTest()).Returns(new object());
             builderMockFactory.Setup(b => b.GetConstraint()).Returns(new CountConstraint());
@@ -480,7 +490,7 @@ namespace NBi.Testing.Unit.NUnit
             var ctrXml = new OrderedXml();
 
             var builderMockFactory = new Mock<ITestCaseBuilder>();
-            builderMockFactory.Setup(b => b.Setup(sutXml, ctrXml, TestConfiguration.Default));
+            builderMockFactory.Setup(b => b.Setup(sutXml, ctrXml, NBi.Core.Configuration.Configuration.Default, It.IsAny<Dictionary<string, ITestVariable>>(), It.IsAny<ServiceLocator>()));
             builderMockFactory.Setup(b => b.Build());
             builderMockFactory.Setup(b => b.GetSystemUnderTest()).Returns(new object());
             builderMockFactory.Setup(b => b.GetConstraint()).Returns(new OrderedConstraint());
@@ -516,7 +526,6 @@ namespace NBi.Testing.Unit.NUnit
 
             Assert.Throws<ArgumentException>(delegate { testCaseFactory.Instantiate(sutXml, ctrXml); });
         }
-
 
         [Test]
         public void IsHandling_QueryExists_False()
@@ -581,7 +590,7 @@ namespace NBi.Testing.Unit.NUnit
             var sutXml = new StructureXml();
             var ctrXml = new ExistsXml();
             var builderMockFactory = new Mock<ITestCaseBuilder>();
-            builderMockFactory.Setup(b => b.Setup(sutXml, ctrXml, TestConfiguration.Default));
+            builderMockFactory.Setup(b => b.Setup(sutXml, ctrXml, NBi.Core.Configuration.Configuration.Default, It.IsAny<Dictionary<string, ITestVariable>>(), It.IsAny<ServiceLocator>()));
             builderMockFactory.Setup(b => b.Build());
             builderMockFactory.Setup(b => b.GetSystemUnderTest()).Returns(new object());
             builderMockFactory.Setup(b => b.GetConstraint()).Returns(new ExistsConstraint("foo"));
@@ -595,7 +604,6 @@ namespace NBi.Testing.Unit.NUnit
             Assert.That(tc, Is.Not.Null);
             builderMockFactory.VerifyAll();
         }
-
 
         [Test]
         public void IsHandling_MembersMatchPattern_True()
@@ -615,7 +623,7 @@ namespace NBi.Testing.Unit.NUnit
             var sutXml = new MembersXml();
             var ctrXml = new MatchPatternXml();
             var builderMockFactory = new Mock<ITestCaseBuilder>();
-            builderMockFactory.Setup(b => b.Setup(sutXml, ctrXml, TestConfiguration.Default));
+            builderMockFactory.Setup(b => b.Setup(sutXml, ctrXml, NBi.Core.Configuration.Configuration.Default, It.IsAny<Dictionary<string, ITestVariable>>(), It.IsAny<ServiceLocator>()));
             builderMockFactory.Setup(b => b.Build());
             builderMockFactory.Setup(b => b.GetSystemUnderTest()).Returns(new object());
             builderMockFactory.Setup(b => b.GetConstraint()).Returns(new NBi.NUnit.Member.MatchPatternConstraint());
@@ -649,7 +657,7 @@ namespace NBi.Testing.Unit.NUnit
             var ctrXml = new MatchPatternXml();
 
             var builderMockFactory = new Mock<ITestCaseBuilder>();
-            builderMockFactory.Setup(b => b.Setup(sutXml, ctrXml, TestConfiguration.Default));
+            builderMockFactory.Setup(b => b.Setup(sutXml, ctrXml, NBi.Core.Configuration.Configuration.Default, It.IsAny<Dictionary<string, ITestVariable>>(), It.IsAny<ServiceLocator>()));
             builderMockFactory.Setup(b => b.Build());
             builderMockFactory.Setup(b => b.GetSystemUnderTest()).Returns(new SqlCommand());
             builderMockFactory.Setup(b => b.GetConstraint()).Returns(new NBi.NUnit.Query.MatchPatternConstraint());
@@ -683,7 +691,7 @@ namespace NBi.Testing.Unit.NUnit
             var ctrXml = new RowCountXml();
 
             var builderMockFactory = new Mock<ITestCaseBuilder>();
-            builderMockFactory.Setup(b => b.Setup(sutXml, ctrXml, TestConfiguration.Default));
+            builderMockFactory.Setup(b => b.Setup(sutXml, ctrXml, NBi.Core.Configuration.Configuration.Default, It.IsAny<Dictionary<string, ITestVariable>>(), It.IsAny<ServiceLocator>()));
             builderMockFactory.Setup(b => b.Build());
             builderMockFactory.Setup(b => b.GetSystemUnderTest()).Returns(new SqlCommand());
             builderMockFactory.Setup(b => b.GetConstraint()).Returns(new RowCountConstraint(null));
@@ -696,7 +704,6 @@ namespace NBi.Testing.Unit.NUnit
 
             Assert.That(tc, Is.Not.Null);
             builderMockFactory.VerifyAll();
-
         }
 
         [Test]
@@ -718,7 +725,7 @@ namespace NBi.Testing.Unit.NUnit
             var ctrXml = new IsXml();
 
             var builderMockFactory = new Mock<ITestCaseBuilder>();
-            builderMockFactory.Setup(b => b.Setup(sutXml, ctrXml, TestConfiguration.Default));
+            builderMockFactory.Setup(b => b.Setup(sutXml, ctrXml, NBi.Core.Configuration.Configuration.Default, It.IsAny<Dictionary<string, ITestVariable>>(), It.IsAny<ServiceLocator>()));
             builderMockFactory.Setup(b => b.Build());
             builderMockFactory.Setup(b => b.GetSystemUnderTest()).Returns(new RelationalCommand(new SqlCommand(), null, null));
             builderMockFactory.Setup(b => b.GetConstraint()).Returns(new IsConstraint("x"));
@@ -731,7 +738,98 @@ namespace NBi.Testing.Unit.NUnit
 
             Assert.That(tc, Is.Not.Null);
             builderMockFactory.VerifyAll();
+        }
+
+        [Test]
+        public void IsHandling_ResultSetReferenceExists_True()
+        {
+            var sutXml = new ResultSetSystemXml();
+            var ctrXml = new LookupExistsXml();
+            var testCaseFactory = new TestCaseFactory();
+
+            var actual = testCaseFactory.IsHandling(sutXml.GetType(), ctrXml.GetType());
+
+            Assert.That(actual, Is.True);
+        }
+
+        [Test]
+        public void Instantiate_ResultSetReferenceExists_TestCase()
+        {
+            var sutXml = new ResultSetSystemXml();
+            var ctrXml = new LookupExistsXml();
+
+            var builderMockFactory = new Mock<ITestCaseBuilder>();
+            builderMockFactory.Setup(b => b.Setup(sutXml, ctrXml, NBi.Core.Configuration.Configuration.Default, It.IsAny<Dictionary<string, ITestVariable>>(), It.IsAny<ServiceLocator>()));
+            builderMockFactory.Setup(b => b.Build());
+            builderMockFactory.Setup(b => b.GetSystemUnderTest()).Returns(new RelationalCommand(new SqlCommand(), null, null));
+            builderMockFactory.Setup(b => b.GetConstraint()).Returns(new IsConstraint("x"));
+            var builder = builderMockFactory.Object;
+
+            var testCaseFactory = new TestCaseFactory();
+            testCaseFactory.Register(typeof(ResultSetSystemXml), typeof(LookupExistsXml), builder);
+
+            var tc = testCaseFactory.Instantiate(sutXml, ctrXml);
+
+            Assert.That(tc, Is.Not.Null);
+            builderMockFactory.VerifyAll();
+        }
+
+        [Test]
+        public void IsHandling_ExecutionEqualToOld_True()
+        {
+            var sutXml = new ExecutionXml();
+            var ctrXml = new EqualToOldXml();
+            var testCaseFactory = new TestCaseFactory();
+
+            var actual = testCaseFactory.IsHandling(sutXml.GetType(), ctrXml.GetType());
+
+            Assert.That(actual, Is.True);
+        }
+
+        [Test]
+        public void Instantiate_ExecutionEqualToOld_TestCase()
+        {
+            var sutXml = new ExecutionXml();
+            var ctrXml = new EqualToOldXml();
+
+            var builderMockFactory = new Mock<ITestCaseBuilder>();
+            builderMockFactory.Setup(b => b.Setup(sutXml, ctrXml, NBi.Core.Configuration.Configuration.Default, It.IsAny<Dictionary<string, ITestVariable>>(), It.IsAny<ServiceLocator>()));
+            builderMockFactory.Setup(b => b.Build());
+            builderMockFactory.Setup(b => b.GetSystemUnderTest()).Returns(new RelationalCommand(new SqlCommand(), null, null));
+            builderMockFactory.Setup(b => b.GetConstraint()).Returns(new IsConstraint("x"));
+            var builder = builderMockFactory.Object;
+
+            var testCaseFactory = new TestCaseFactory();
+            testCaseFactory.Register(typeof(ExecutionXml), typeof(EqualToOldXml), builder);
+
+            var tc = testCaseFactory.Instantiate(sutXml, ctrXml);
+
+            Assert.That(tc, Is.Not.Null);
+            builderMockFactory.VerifyAll();
+        }
+
+        [Test]
+        public void Instantiate_ScalarScoreExists_TestCase()
+        {
+            var sutXml = new ScalarXml();
+            var ctrXml = new ScoreXml();
+
+            var builderMockFactory = new Mock<ITestCaseBuilder>();
+            builderMockFactory.Setup(b => b.Setup(sutXml, ctrXml, NBi.Core.Configuration.Configuration.Default, It.IsAny<Dictionary<string, ITestVariable>>(), It.IsAny<ServiceLocator>()));
+            builderMockFactory.Setup(b => b.Build());
+            builderMockFactory.Setup(b => b.GetSystemUnderTest()).Returns(1);
+            builderMockFactory.Setup(b => b.GetConstraint()).Returns(new ScoreConstraint(1m));
+            var builder = builderMockFactory.Object;
+
+            var testCaseFactory = new TestCaseFactory();
+            testCaseFactory.Register(typeof(ScalarXml), typeof(ScoreXml), builder);
+
+            var tc = testCaseFactory.Instantiate(sutXml, ctrXml);
+
+            Assert.That(tc, Is.Not.Null);
+            builderMockFactory.VerifyAll();
 
         }
+
     }
 }

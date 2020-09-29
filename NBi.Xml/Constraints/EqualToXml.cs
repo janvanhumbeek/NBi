@@ -5,16 +5,27 @@ using System.Linq;
 using System.Xml.Serialization;
 using NBi.Core;
 using NBi.Core.ResultSet;
-using NBi.Core.ResultSet.Comparer;
+using NBi.Core.Scalar.Comparer;
 using NBi.Xml.Items;
 using NBi.Xml.Items.ResultSet;
 using NBi.Xml.Settings;
-using NBi.Xml.Items.Xml;
+using NBi.Xml.Items.Hierarchical.Xml;
+using NBi.Core.ResultSet.Equivalence;
+using NBi.Core.Query.Client;
+using NBi.Xml.Systems;
 
 namespace NBi.Xml.Constraints
 {
     public class EqualToXml : AbstractConstraintXml
     {
+        public enum ComparisonBehavior
+        {
+            [XmlEnum("multiple-rows")]
+            MultipleRows = 0,
+            [XmlEnum("single-row")]
+            SingleRow = 1
+        }
+
 
         public EqualToXml()
         {
@@ -47,9 +58,13 @@ namespace NBi.Xml.Constraints
         }
 
         [XmlElement("resultSet")]
-        public ResultSetXml ResultSet { get; set; }
+        public virtual ResultSetXml ResultSetOld { get; set; }
 
-        [XmlElement("query")]
+        [XmlElement("result-set")]
+        public virtual ResultSetSystemXml ResultSet { get; set; }
+
+        [XmlElement(Type = typeof(QueryXml), ElementName = "query"),
+        ]
         public QueryXml Query { get; set; }
 
         [XmlElement("xml-source")]
@@ -61,8 +76,8 @@ namespace NBi.Xml.Constraints
             {
                 if (Query != null)
                     return Query;
-                if (ResultSet != null)
-                    return ResultSet;
+                if (ResultSetOld != null)
+                    return ResultSetOld;
                 if (XmlSource != null)
                     return XmlSource;
 
@@ -70,15 +85,23 @@ namespace NBi.Xml.Constraints
             }
         }
 
-
+        [XmlAttribute("behavior")]
+        [DefaultValue(ComparisonBehavior.MultipleRows)]
+        public virtual ComparisonBehavior Behavior { get; set; }
 
         [XmlAttribute("keys")]
-        [DefaultValue(ResultSetComparisonSettings.KeysChoice.First)]
-        public ResultSetComparisonSettings.KeysChoice KeysDef { get; set; }
+        [DefaultValue(SettingsOrdinalResultSet.KeysChoice.First)]
+        public SettingsOrdinalResultSet.KeysChoice KeysDef { get; set; }
 
         [XmlAttribute("values")]
-        [DefaultValue(ResultSetComparisonSettings.ValuesChoice.AllExpectFirst)]
-        public ResultSetComparisonSettings.ValuesChoice ValuesDef { get; set; }
+        [DefaultValue(SettingsOrdinalResultSet.ValuesChoice.AllExpectFirst)]
+        public SettingsOrdinalResultSet.ValuesChoice ValuesDef { get; set; }
+
+        [XmlAttribute("keys-names")]
+        public string KeyName { get; set; }
+
+        [XmlAttribute("values-names")]
+        public string ValueName { get; set; }
 
         [XmlAttribute("values-default-type")]
         [DefaultValue(ColumnType.Numeric)]
@@ -95,7 +118,7 @@ namespace NBi.Xml.Constraints
         protected string tolerance;
         [XmlAttribute("tolerance")]
         [DefaultValue("")]
-        public string Tolerance
+        public virtual string Tolerance
         {
             get
             { return tolerance; }
@@ -110,7 +133,7 @@ namespace NBi.Xml.Constraints
         [XmlElement("column")]
         public List<NBi.Xml.Items.ResultSet.ColumnDefinitionXml> columnsDef;
 
-        public IList<IColumnDefinition> ColumnsDef
+        public IReadOnlyList<IColumnDefinition> ColumnsDef
         {
             get
             {
@@ -120,37 +143,9 @@ namespace NBi.Xml.Constraints
             }
         }
 
-        [XmlAttribute("persistance")]
-        [DefaultValue(PersistanceChoice.Never)]
-        public PersistanceChoice Persistance;
-
-        public ResultSetComparisonSettings GetSettings()
-        {
-            return new ResultSetComparisonSettings(KeysDef, ValuesDef, ValuesDefaultType, new NumericToleranceFactory().Instantiate(Tolerance), ColumnsDef);
-        }
-
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Security", "CA2100:Review SQL queries for security vulnerabilities")]
-        public virtual IDbCommand GetCommand()
-        {
-            if (Query==null)
-                return null;
-
-            var conn = new ConnectionFactory().Get(Query.GetConnectionString());
-            var cmd = conn.CreateCommand();
-            cmd.CommandText = Query.GetQuery();
-            
-
-            return cmd;
-        }
-
         private readonly bool parallelizeQueries;
-        public bool ParallelizeQueries
-        {
-            get
-            {
-                return parallelizeQueries || Settings.ParallelizeQueries;
-            }
-        }
-              
+        public bool ParallelizeQueries =>  parallelizeQueries || Settings.ParallelizeQueries;
     }
+
+    public class EqualToOldXml : EqualToXml { }
 }

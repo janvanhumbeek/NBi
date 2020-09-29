@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
-using NBi.Core.ResultSet;
+using NBi.Core.ResultSet.Resolver;
 using NBi.NUnit.Member;
 using NBi.NUnit.Query;
+using NBi.NUnit.ResultSetComparison;
 using NBi.NUnit.Structure;
 using NF = NUnit.Framework;
+using NBi.Core.ResultSet;
 
 namespace NBi.NUnit.FluentInterface
 {
@@ -28,33 +30,21 @@ namespace NBi.NUnit.FluentInterface
             return ctr;
         }
 
-        public static EqualToConstraint EqualTo(ResultSet resultSet)
+        public static EqualToConstraint EqualTo(IResultSetService service)
         {
-            var ctr = new EqualToConstraint(resultSet);
+            var ctr = new EqualToConstraint(service);
             return ctr;
         }
-
-        public static EqualToConstraint EqualTo(IDbCommand command)
-        {
-            var ctr = new EqualToConstraint(command);
-            return ctr;
-        }
-
-        public static EqualToConstraint EqualTo(IEnumerable<IRow> rows)
-        {
-            var ctr = new EqualToConstraint(rows);
-            return ctr;
-        }
-
+        
         public new static OrderedConstraint Ordered()
         {
             var ctr = new OrderedConstraint();
             return ctr;
         }
 
-        public static NBi.NUnit.Structure.SubsetOfConstraint SubsetOf(IEnumerable<string> values)
+        public static NBi.NUnit.Structure.ContainedInConstraint SubsetOf(IEnumerable<string> values)
         {
-            var ctr = new NBi.NUnit.Structure.SubsetOfConstraint(values);
+            var ctr = new NBi.NUnit.Structure.ContainedInConstraint(values);
             return ctr;
         }
     }

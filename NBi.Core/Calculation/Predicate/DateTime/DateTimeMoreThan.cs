@@ -1,4 +1,5 @@
-﻿using System;
+﻿using NBi.Core.Scalar.Resolver;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
@@ -9,9 +10,17 @@ namespace NBi.Core.Calculation.Predicate.DateTime
 {
     class DateTimeMoreThan : DateTimePredicate
     {
-        public override bool Compare(System.DateTime x, System.DateTime y)
+        public DateTimeMoreThan(bool not, IScalarResolver reference) : base(not, reference)
+        { }
+
+        protected override bool Compare(System.DateTime x, System.DateTime y)
         {
             return x > y;
+        }
+
+        public override string ToString()
+        {
+            return $"is after than {Reference.Execute()}";
         }
     }
 }

@@ -10,13 +10,17 @@ using NBi.Core.ResultSet;
 using NUnit.Framework.Constraints;
 using NUnitCtr = NUnit.Framework.Constraints;
 using NBi.Framework.FailureMessage;
+using NBi.Framework.FailureMessage.Markdown;
+using NBi.Core.Query.Resolver;
+using NBi.Core.ResultSet.Resolver;
+using NBi.Core.Query;
 
 namespace NBi.NUnit.Member
 {
     public abstract class AbstractMembersCollectionConstraint : AbstractMembersConstraint
     {
 
-        private readonly IDbCommand commandToRetrieveExpectedItems;
+        private readonly IResultSetResolver expectedResolver;
         private readonly MembersDiscoveryRequest membersDiscoveryRequest;
         
         private IEnumerable<string> expectedItems;
@@ -29,8 +33,8 @@ namespace NBi.NUnit.Member
             }
         }
 
-        private ItemsMessage failure;
-        protected internal ItemsMessage Failure
+        private IItemsMessageFormatter failure;
+        protected internal IItemsMessageFormatter Failure
         {
             get
             {
@@ -44,9 +48,10 @@ namespace NBi.NUnit.Member
             }
         }
 
-        protected ItemsMessage BuildFailure()
+        protected IItemsMessageFormatter BuildFailure()
         {
-            var msg = new ItemsMessage(Configuration.FailureReportProfile);
+            var factory = new ItemsMessageFormatterFactory();
+            var msg = factory.Instantiate(Configuration.FailureReportProfile);
             var compare = new ListComparer()
                         .Compare
                         (
@@ -63,10 +68,10 @@ namespace NBi.NUnit.Member
         /// Construct a AbstractMembersConstraint
         /// </summary>
         /// <param name="expected">The command to retrieve the list of expected items</param>
-        public AbstractMembersCollectionConstraint(IDbCommand expected)
+        public AbstractMembersCollectionConstraint(IResultSetResolver expected)
             : base()
         {
-            commandToRetrieveExpectedItems = expected;
+            expectedResolver = expected;
         }
 
         /// <summary>
@@ -94,16 +99,15 @@ namespace NBi.NUnit.Member
 
         protected override void PreInitializeMatching()
         {
-            if (commandToRetrieveExpectedItems != null)
-                expectedItems = GetMembersFromResultSet(commandToRetrieveExpectedItems);
+            if (expectedResolver != null)
+                expectedItems = GetMembersFromResultSet(expectedResolver);
             if (membersDiscoveryRequest != null)
                 expectedItems = GetMembersFromDiscoveryRequest(membersDiscoveryRequest);
         }
 
-
-        protected IEnumerable<string> GetMembersFromResultSet(Object obj)
+        protected IEnumerable<string> GetMembersFromResultSet(IResultSetResolver resolver)
         {
-            var rs = ResultSetBuilder.Build(obj);
+            var rs = resolver.Execute();
 
             var members = new List<string>();
             foreach (DataRow row in rs.Rows)
@@ -120,27 +124,6 @@ namespace NBi.NUnit.Member
             var members = results.ToCaptions();
             return members;
         }
-
-        /// <summary>
-        /// Engine dedicated to ResultSet acquisition
-        /// </summary>
-        protected IResultSetBuilder resultSetBuilder;
-        protected internal IResultSetBuilder ResultSetBuilder
-        {
-            get
-            {
-                if (resultSetBuilder == null)
-                    resultSetBuilder = new ResultSetBuilder();
-                return resultSetBuilder;
-            }
-            set
-            {
-                if (value == null)
-                    throw new ArgumentNullException();
-                resultSetBuilder = value;
-            }
-        }
-
 
         #endregion
 
@@ -186,7 +169,7 @@ namespace NBi.NUnit.Member
             writer.WriteLine();
             base.WriteMessageTo(writer);
             writer.WriteLine();
-            writer.WriteLine(Failure.RenderCompared());
+            writer.WriteLine(Failure.RenderAnalysis());
         }
 
         protected abstract ListComparer.Comparison GetComparisonType();

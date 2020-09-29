@@ -1,4 +1,5 @@
-﻿using NBi.Core.ResultSet.Converter;
+﻿using NBi.Core.Scalar.Casting;
+using NBi.Core.Scalar.Resolver;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,17 +8,20 @@ using System.Threading.Tasks;
 
 namespace NBi.Core.Calculation.Predicate.Numeric
 {
-    abstract class NumericPredicate : IPredicate
+    abstract class NumericPredicate : AbstractPredicateReference
     {
-        public bool Compare(object x, object y)
+        public NumericPredicate(bool not, IScalarResolver reference) : base(not, reference)
+        { }
+
+        protected override bool ApplyWithReference(object reference, object x)
         {
-            var converter = new NumericConverter();
-            var numX = converter.Convert(x);
-            var numY = converter.Convert(y);
+            var caster = new NumericCaster();
+            var numX = caster.Execute(x);
+            var numY = caster.Execute(reference);
 
             return Compare(numX, numY);
         }
 
-        public abstract bool Compare(decimal x, decimal y);
+        protected abstract bool Compare(decimal x, decimal y);
     }
 }

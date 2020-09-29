@@ -5,6 +5,9 @@ using System.Linq;
 using NBi.Core.Evaluate;
 using NBi.Core.ResultSet;
 using NUnitCtr = NUnit.Framework.Constraints;
+using NBi.Core.Query.Resolver;
+using NBi.Core.ResultSet.Resolver;
+using NBi.Extensibility.Query;
 
 namespace NBi.NUnit.Query
 {
@@ -12,33 +15,13 @@ namespace NBi.NUnit.Query
     {
         
         
-        private readonly IEnumerable<IColumnVariable> variables;
+        private readonly IEnumerable<IColumnAlias> variables;
         private readonly IEnumerable<IColumnExpression> expressions;
 
         protected ResultSet actualResultSet;
         protected List<RowEvaluationResult> evaluationResults;
 
-        /// <summary>
-        /// Engine dedicated to ResultSet acquisition
-        /// </summary>
-        protected IResultSetBuilder resultSetBuilder;
-        protected internal IResultSetBuilder ResultSetBuilder
-        {
-            get
-            {
-                if(resultSetBuilder==null)
-                    resultSetBuilder = new ResultSetBuilder();
-                return resultSetBuilder;
-            }
-            set
-            {
-                if(value==null)
-                    throw new ArgumentNullException();
-                resultSetBuilder = value;
-            }
-        }
-        
-        public EvaluateRowsConstraint (IEnumerable<IColumnVariable> variables, IEnumerable<IColumnExpression> expressions)
+        public EvaluateRowsConstraint (IEnumerable<IColumnAlias> variables, IEnumerable<IColumnExpression> expressions)
         {
             this.variables = variables;
             this.expressions = expressions;
@@ -51,8 +34,8 @@ namespace NBi.NUnit.Query
         /// <returns>true, if the result of query execution is exactly identical to the content of the resultset</returns>
         public override bool Matches(object actual)
         {
-            if (actual is IDbCommand)
-                return Process((IDbCommand)actual);
+            if (actual is IQuery)
+                return Process((IQuery)actual);
             else if (actual is ResultSet)
                 return doMatch((ResultSet)actual);
             else
@@ -89,15 +72,19 @@ namespace NBi.NUnit.Query
         /// </summary>
         /// <param name="actual">IDbCommand</param>
         /// <returns></returns>
-        public bool Process(IDbCommand actual)
+        public bool Process(IQuery actual)
         {
             ResultSet rsActual = GetResultSet(actual);
             return this.Matches(rsActual);
         }
 
-        protected ResultSet GetResultSet(Object obj)
+        protected ResultSet GetResultSet(IQuery query)
         {
-            return ResultSetBuilder.Build(obj);
+            var argsQuery = new QueryResolverArgs(query.Statement, query.ConnectionString, query.Parameters, query.TemplateTokens, query.Timeout, query.CommandType);
+            var args = new QueryResultSetResolverArgs(argsQuery);
+            var factory = new ResultSetResolverFactory(null);
+            var resolver = factory.Instantiate(args);
+            return resolver.Execute();
         }
 
         /// <summary>
@@ -111,7 +98,7 @@ namespace NBi.NUnit.Query
 
         public override void WriteActualValueTo(NUnitCtr.MessageWriter writer)
         {
-            FormatResultSet(writer, actualResultSet);
+            writer.WriteActualValue("deprecated feature!");
         }
 
         public override void WriteMessageTo(NUnitCtr.MessageWriter writer)
@@ -152,26 +139,6 @@ namespace NBi.NUnit.Query
             writer.WriteLine();
             if (failedRowsSample.Count()<failedRows.Count())
                 writer.WriteLine("... {0} of {1} failing rows skipped for display purpose.", failedRows.Count()-failedRowsSample.Count(), failedRows.Count());
-        }
-
-             
-
-        protected virtual void FormatResultSet(NUnitCtr.MessageWriter writer, ResultSetCompareResult.Sample sample, bool compare)
-        {
-            var textCreator = new ResultSetTextWriter();
-            var output = textCreator.BuildContent(sample.Rows, sample.Count, compare);
-            foreach (var line in output)
-                writer.WriteLine(line);                
-        }
-
-
-        protected virtual void FormatResultSet(NUnitCtr.MessageWriter writer, ResultSet resultSet)
-        {
-            var rows = resultSet.Rows.Cast<DataRow>().ToList();
-            var textCreator = new ResultSetTextWriter();
-            var output = textCreator.BuildContent(rows, rows.Count(), false);
-            foreach (var line in output)
-                writer.WriteLine(line);
         }
     }
 }

@@ -8,7 +8,11 @@ namespace NBi.Xml.Decoration
 {
     public class ConditionXml
     {
-        [XmlElement(Type = typeof(ServiceRunningXml), ElementName = "service-running")
+        [
+            XmlElement(Type = typeof(ServiceRunningConditionXml), ElementName = "service-running"),
+            XmlElement(Type = typeof(CustomConditionXml), ElementName = "custom"),
+            XmlElement(Type = typeof(FolderExistsConditionXml), ElementName = "folder-exists"),
+            XmlElement(Type = typeof(FileExistsConditionXml), ElementName = "file-exists"),
         ]
         public List<DecorationConditionXml> Predicates { get; set; }
 

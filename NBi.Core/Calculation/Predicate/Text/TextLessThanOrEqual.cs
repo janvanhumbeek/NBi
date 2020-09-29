@@ -1,4 +1,5 @@
-﻿using System;
+﻿using NBi.Core.Scalar.Resolver;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
@@ -7,12 +8,20 @@ using System.Threading.Tasks;
 
 namespace NBi.Core.Calculation.Predicate.Text
 {
-    class TextLessThanOrEqual : IPredicate
+    class TextLessThanOrEqual : AbstractPredicateReference
     {
-        public bool Compare(object x, object y)
+        public TextLessThanOrEqual(bool not, IScalarResolver reference) : base(not, reference)
+        { }
+
+        protected override bool ApplyWithReference(object reference, object x)
         {
             var cpr = StringComparer.Create(CultureInfo.InvariantCulture, false);
-            return cpr.Compare(x.ToString(), y.ToString()) <= 0;
+            return cpr.Compare(x.ToString(), reference.ToString()) <= 0;
+        }
+
+        public override string ToString()
+        {
+            return $"is alphabetically before '{Reference.Execute()}' or equal to it";
         }
     }
 }

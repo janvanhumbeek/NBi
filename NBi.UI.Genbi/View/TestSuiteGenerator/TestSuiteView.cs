@@ -3,11 +3,10 @@ using System.ComponentModel;
 using System.Data;
 using System.Linq;
 using System.Windows.Forms;
-using NBi.Service;
-using NBi.Service.Dto;
+using NBi.GenbiL.Stateful;
 using NBi.UI.Genbi.Command;
-using NBi.UI.Genbi.Interface;
 using NBi.UI.Genbi.Presenter;
+using NBi.UI.Genbi.Service;
 using NBi.UI.Genbi.Stateful;
 
 namespace NBi.UI.Genbi.View.TestSuiteGenerator
@@ -30,7 +29,7 @@ namespace NBi.UI.Genbi.View.TestSuiteGenerator
             TestCasesPresenter = new TestCasesPresenter(new RenameVariableWindow(), new FilterWindow(), new ConnectionStringWindow(), new TestCaseCollectionManager(), State.TestCases, State.Variables, State.ConnectionStringNames);
             TemplatePresenter = new TemplatePresenter(new TemplateManager(), State.Template);
             SettingsPresenter = new SettingsPresenter(new SettingsManager(), State.Settings);
-            TestListPresenter = new TestListPresenter(new TestListManager(), State.Tests, State.TestCases, State.Variables, State.Template);
+            TestListPresenter = new TestListPresenter(new TestListManager(), State.Tests, State.TestCases, State.Variables, State.Template, State.GlobalVariables);
             TestSuitePresenter = new TestSuitePresenter(new TestSuiteManager(), State.Tests, State.Settings);
             MacroPresenter = new MacroPresenter();
 
@@ -104,25 +103,19 @@ namespace NBi.UI.Genbi.View.TestSuiteGenerator
             CommandManager.Instance.Bindings.Add(this.MacroPresenter.PlayMacroCommand, playMacroToolStripMenuItem);
         }
 
-        private void UnbindPresenter()
-        {
-            //CommandManager.Instance.Bindings.Remove(this.Presenter.RemoveVariableCommand, apply);
-        }
-
-
         private void AboutToolStripMenuItem_Click(object sender, EventArgs e)
         {
             var window = new AboutBox();
             window.ShowDialog(this);
         }
 
-        private void generateToolStripMenuItem1_Click(object sender, EventArgs e)
+        private void GenerateToolStripMenuItem1_Click(object sender, EventArgs e)
         {
             var view = Bootstrapper.GetRunnerConfigView();
             view.ShowDialog(this);
         }
 
-        private void menuStrip_ItemClicked(object sender, ToolStripItemClickedEventArgs e)
+        private void MenuStrip_ItemClicked(object sender, ToolStripItemClickedEventArgs e)
         {
 
         }

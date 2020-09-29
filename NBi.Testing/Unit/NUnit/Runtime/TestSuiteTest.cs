@@ -1,14 +1,20 @@
 ﻿#region Using directives
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using Moq;
 using NBi.Core;
+using NBi.Core.ResultSet;
+using NBi.Extensibility;
 using NBi.NUnit.Runtime;
+using NBi.NUnit.Runtime.Configuration;
 using NBi.Xml;
 using NBi.Xml.Items;
 using NBi.Xml.Systems;
+using NBi.Xml.Variables;
+using NBi.Xml.Variables.Sequence;
 using NUnit.Framework;
 using NUnit.Framework.Constraints;
 #endregion
@@ -21,14 +27,14 @@ namespace NBi.Testing.Unit.NUnit.Runtime
 
         #region SetUp & TearDown
         //Called only at instance creation
-        [TestFixtureSetUp]
+        [OneTimeSetUp]
         public void SetupMethods()
         {
 
         }
 
         //Called only at instance destruction
-        [TestFixtureTearDown]
+        [OneTimeTearDown]
         public void TearDownMethods()
         {
         }
@@ -49,32 +55,20 @@ namespace NBi.Testing.Unit.NUnit.Runtime
         [Test]
         public void GetOwnFilename_DefaultValue_ReturnNBiNUnitRuntimedll()
         {
-            //Buiding object used during test
-            var testSuite = new TestSuite();
-            
-            //Call the method to test
-            var filename = testSuite.GetOwnFilename();
-
-            //Assertion
+            var filename = TestSuite.GetOwnFilename();
             Assert.That(filename, Is.EqualTo("NBi.NUnit.Runtime.dll"));
         }
 
         [Test]
         public void GetSelfFilename_DefaultValue_ReturnNBiNUnitRuntimedll()
         {
-            //Buiding object used during test
-            var testSuite = new TestSuite();
-
-            //Call the method to test
-            var name = testSuite.GetManifestName();
-
-            //Assertion
+            var name = TestSuite.GetManifestName();
             Assert.That(name, Is.EqualTo("NBi.NUnit.Runtime.dll"));
         }
 
         [Test]
         public void GetTestCases_TestCaseWithRegexName_ReplaceRegexByValueInName()
-        {          
+        {
             //Buiding object used during test
             //TestSuite invoked
             var test = new TestXml()
@@ -87,7 +81,7 @@ namespace NBi.Testing.Unit.NUnit.Runtime
                 {
                     Item = new MeasureXml()
                     {
-                        Caption="My Caption",
+                        Caption = "My Caption",
                         DisplayFolder = "My Display Folder"
                     }
                 }
@@ -95,15 +89,15 @@ namespace NBi.Testing.Unit.NUnit.Runtime
 
             var testSuiteXml = new TestSuiteXml();
             testSuiteXml.Tests.Add(test);
-                    
+
             //Building a stub for TestSuiteManager
             var testSuiteManagerStub = new Mock<XmlManager>();
             testSuiteManagerStub.Setup(mgr => mgr.Load(It.IsAny<string>()));
             testSuiteManagerStub.Setup(mgr => mgr.TestSuite).Returns(testSuiteXml);
 
             //Building a stub for TestSuiteFinder
-            var testSuiteFinderStub = new Mock<TestSuiteFinder>();
-            testSuiteFinderStub.Setup(finder => finder.Find()).Returns(string.Empty);
+            var testSuiteFinderStub = new Mock<TestSuiteProvider>();
+            testSuiteFinderStub.Setup(finder => finder.GetFilename(string.Empty)).Returns(string.Empty);
 
             var testSuite = new TestSuite(testSuiteManagerStub.Object, testSuiteFinderStub.Object);
 
@@ -113,10 +107,102 @@ namespace NBi.Testing.Unit.NUnit.Runtime
 
             //Assertion
             Console.WriteLine(testCase.TestName);
-            Assert.That(testCase.TestName, Is.StringContaining("my name contains a regex").And
+            Assert.That(testCase.TestName, Does.Contain("my name contains a regex").And
                                             .StringContaining("My Caption").And
                                             .StringContaining("My Display Folder").And
                                             .StringContaining("and it's parsed!"));
+        }
+
+        [Test]
+        public void GetTestCases_TestWithInstanceSettling_TestNameIsCorrect()
+        {
+            var testSuiteXml = new TestSuiteXml()
+            {
+                Tests = new List<TestXml>()
+                {
+                    new TestXml()
+                    {
+                        Name = "~My test for {@month:MMMM}",
+                        InstanceSettling = new InstanceSettlingXml()
+                        {
+                            Variable = new InstanceVariableXml()
+                            {
+                                Name = "month",
+                                Type = ColumnType.DateTime,
+                                SentinelLoop = new SentinelLoopXml()
+                                    { Seed = "2019-01-01", Terminal = "2019-02-01", Step = "1 month" }
+                            }
+                        }
+                    }
+                }
+            };
+
+            //Building a stub for TestSuiteManager
+            var testSuiteManagerStub = new Mock<XmlManager>();
+            testSuiteManagerStub.Setup(mgr => mgr.Load(It.IsAny<string>()));
+            testSuiteManagerStub.Setup(mgr => mgr.TestSuite).Returns(testSuiteXml);
+
+            //Building a stub for TestSuiteFinder
+            var testSuiteFinderStub = new Mock<TestSuiteProvider>();
+            testSuiteFinderStub.Setup(finder => finder.GetFilename(string.Empty)).Returns(string.Empty);
+
+            var testSuite = new TestSuite(testSuiteManagerStub.Object, testSuiteFinderStub.Object);
+
+            //Call the method to test
+            var testCases = testSuite.GetTestCases();
+
+            //Assertion
+            Assert.That(testCases.ElementAt(0).TestName, Does.Contain("My test for January"));
+            Assert.That(testCases.ElementAt(1).TestName, Does.Contain("My test for February"));
+        }
+
+        [Test]
+        public void GetTestCases_TestWithInstanceSettlingCategories_CorrectCategories()
+        {
+            var testSuiteXml = new TestSuiteXml()
+            {
+                Tests = new List<TestXml>()
+                {
+                    new TestXml()
+                    {
+                        Name = "Youpla",
+                        InstanceSettling = new InstanceSettlingXml()
+                        {
+                            Variable = new InstanceVariableXml()
+                            {
+                                Name = "month",
+                                Type = ColumnType.DateTime,
+                                SentinelLoop = new SentinelLoopXml()
+                                    { Seed = "2019-01-01", Terminal = "2019-02-01", Step = "1 month" }
+                            },
+                            Categories = new List<string>() { "~{@month:MMMM}", "~{@month:yy}" },
+                        },
+                        Categories = new List<string>() { "Category" },
+                    }
+                }
+            };
+
+            //Building a stub for TestSuiteManager
+            var testSuiteManagerStub = new Mock<XmlManager>();
+            testSuiteManagerStub.Setup(mgr => mgr.Load(It.IsAny<string>()));
+            testSuiteManagerStub.Setup(mgr => mgr.TestSuite).Returns(testSuiteXml);
+
+            //Building a stub for TestSuiteFinder
+            var testSuiteFinderStub = new Mock<TestSuiteProvider>();
+            testSuiteFinderStub.Setup(finder => finder.GetFilename(string.Empty)).Returns(string.Empty);
+
+            var testSuite = new TestSuite(testSuiteManagerStub.Object, testSuiteFinderStub.Object);
+
+            //Call the method to test
+            var testCases = testSuite.GetTestCases();
+
+            //Assertion
+            Assert.That(testCases.ElementAt(0).Categories, Has.Member("January"));
+            Assert.That(testCases.ElementAt(0).Categories, Has.Member("19"));
+            Assert.That(testCases.ElementAt(0).Categories, Has.Member("Category"));
+            Assert.That(testCases.ElementAt(1).Categories, Has.Member("February"));
+            Assert.That(testCases.ElementAt(1).Categories, Has.Member("19"));
+            Assert.That(testCases.ElementAt(1).Categories, Has.Member("Category"));
         }
 
         [Test]
@@ -158,7 +244,7 @@ namespace NBi.Testing.Unit.NUnit.Runtime
             catch (AssertionException ex)
             {
                 Console.WriteLine(ex.Message);
-                Assert.That(ex.Message, Is.StringContaining("empty"));
+                Assert.That(ex.Message, Does.Contain("empty"));
             }
             catch (Exception ex)
             {
@@ -189,7 +275,7 @@ namespace NBi.Testing.Unit.NUnit.Runtime
             }
             catch (Exception ex)
             {
-                if (ex.InnerException==null)
+                if (ex.InnerException == null)
                     Assert.Fail("The exception should have been an CustomStackTraceErrorException but was {0}.\r\n{1}", new object[] { ex.GetType().FullName, ex.StackTrace });
                 else
                     Assert.Fail("The exception should have been an CustomStackTraceErrorException but was something else. The inner exception is {0}.\r\n{1}", new object[] { ex.InnerException.GetType().FullName, ex.InnerException.StackTrace });
@@ -216,7 +302,7 @@ namespace NBi.Testing.Unit.NUnit.Runtime
             catch (CustomStackTraceErrorException ex)
             {
                 //Console.WriteLine(ex.Message);
-                Assert.That(ex.Message, Is.StringContaining("Filename"));
+                Assert.That(ex.Message, Does.Contain("Filename"));
             }
             catch (Exception ex)
             {
@@ -235,15 +321,28 @@ namespace NBi.Testing.Unit.NUnit.Runtime
 
             // A Stream is needed to read the XML document.
             using (Stream stream = Assembly.GetExecutingAssembly()
-                                           .GetManifestResourceStream("NBi.Testing.Unit.Xml.Resources.GroupXmlTestSuite.xml"))
+                                           .GetManifestResourceStream("NBi.Testing.Unit.NUnit.Runtime.Resources.GroupXmlTestSuite.xml"))
             using (StreamReader reader = new StreamReader(stream))
             {
                 manager.Read(reader);
             }
 
-            var testSuite = new TestSuite(manager, null);
+            var testSuite = new TestSuite(manager);
             var testCases = testSuite.BuildTestCases();
-            Assert.That(testCases.Count(), Is.EqualTo(2+2+1+1));
+            Assert.That(testCases.Count(), Is.EqualTo(2 + 2 + 1 + 1));
+        }
+
+        [Test]
+        public void ApplyConfig_OneOverridenVariable_Set()
+        {
+            var testSuite = new TestSuite(new XmlManager());
+            var config = new NBiSection();
+            config.Variables.Add(new VariableElement("myVar", "123.12", ColumnType.Numeric));
+
+            testSuite.ApplyConfig(config);
+            Assert.That(TestSuite.OverridenVariables.Count, Is.EqualTo(1));
+            Assert.That(TestSuite.OverridenVariables.ContainsKey("myVar"), Is.True);
+            Assert.That(TestSuite.OverridenVariables["myVar"], Is.EqualTo(123.12));
         }
 
     }

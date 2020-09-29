@@ -6,6 +6,9 @@ using NBi.Core.ResultSet;
 using NBi.Core.Calculation;
 using NBi.Framework.FailureMessage;
 using NUnitCtr = NUnit.Framework.Constraints;
+using NBi.Framework;
+using NBi.Core.Configuration.FailureReport;
+using NBi.Core.ResultSet.Filtering;
 
 namespace NBi.NUnit.Query
 {
@@ -16,25 +19,31 @@ namespace NBi.NUnit.Query
         {
             filterFunction = filter.AntiApply;
         }
-        protected override bool doMatch(int actual)
-        {
-            return filterResultSet.Rows.Count == 0;
-        }
-       
+        protected override bool doMatch(int actual) 
+            => filterResultSet.Rows.Count == 0;
+
         public override void WriteDescriptionTo(NUnitCtr.MessageWriter writer)
         {
-            writer.WritePredicate("all rows validate the predicate");
+            if (Configuration.FailureReportProfile.Format == FailureReportFormat.Json)
+                return;
+            else
+                writer.WritePredicate($"all rows validate the predicate '{filter.Describe()}'.");
         }
 
         public override void WriteFilterMessageTo(NUnitCtr.MessageWriter writer)
         {
+            if (Configuration.FailureReportProfile.Format == FailureReportFormat.Json)
+                return;
             writer.WriteLine("Rows not validating the predicate:");
         }
 
         public override void WriteActualValueTo(NUnitCtr.MessageWriter writer)
         {
+            if (Configuration.FailureReportProfile.Format == FailureReportFormat.Json)
+                return;
+
             var value = filterResultSet.Rows.Count;
-            writer.WriteLine("{0} row{1} do{2}n't validate the predicate", value, value > 1 ? "s" : string.Empty, value == 1 ? "es" : string.Empty);
+            writer.WriteLine($"{value} row{(value > 1 ? "s" : string.Empty)} do{(value == 1 ? "es" : string.Empty)}n't validate the predicate '{filter.Describe()}'.");
         }
     }
 }

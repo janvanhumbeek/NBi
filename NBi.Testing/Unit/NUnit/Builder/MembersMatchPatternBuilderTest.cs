@@ -20,14 +20,14 @@ namespace NBi.Testing.Unit.NUnit.Builder
 
         #region SetUp & TearDown
         //Called only at instance creation
-        [TestFixtureSetUp]
+        [OneTimeSetUp]
         public void SetupMethods()
         {
 
         }
 
         //Called only at instance destruction
-        [TestFixtureTearDown]
+        [OneTimeTearDown]
         public void TearDownMethods()
         {
         }
@@ -48,9 +48,7 @@ namespace NBi.Testing.Unit.NUnit.Builder
         [Test]
         public void GetConstraint_Build_CorrectConstraint()
         {
-            var sutXml = new MembersXml();
-            var item = new HierarchyXml();
-            sutXml.Item = item;
+            var sutXml = new MembersXml() { Item = new HierarchyXml() { ConnectionString = "connStr" } };
             var ctrXml = new MatchPatternXml();
 
             var discoFactoStubFactory = new Mock<DiscoveryRequestFactory>();

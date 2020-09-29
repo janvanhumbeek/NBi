@@ -47,3 +47,12 @@ NBi.ncrunchsolution
 Thumbs.db
 *.rej
 *.diff
+
+#Nuget
+*.compiled.nuspec
+.nupkg/
+.vs/
+
+#Temp
+Daquar.*/
+NBi.Data3Sixty*/

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.IO;
+using NBi.Extensibility;
 
 namespace NBi.Core.Assemblies
 {
@@ -22,6 +23,9 @@ namespace NBi.Core.Assemblies
         {
             if (!Path.IsPathRooted(assemblyPath))
                 assemblyPath = Path.GetFullPath(assemblyPath);
+
+            if (!File.Exists(assemblyPath))
+                throw new ExternalDependencyNotFoundException(assemblyPath);
 
             var assembly = Assembly.LoadFile(assemblyPath);
             var type = assembly.GetType(typeName);
@@ -97,7 +101,7 @@ namespace NBi.Core.Assemblies
             var flags = BindingFlags.IgnoreCase | BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Static;
             MethodInfo methodInfo = type.GetMethod(methodName, flags);
             if (methodInfo == null)
-                throw new ArgumentException(string.Format("Method named '{0}' not found in type '{1}'", methodName, type), "methodName");
+                throw new ArgumentException(string.Format("Static method named '{0}' not found in type '{1}'", methodName, type), "methodName");
 
             var paramList = new List<object>();
             foreach (ParameterInfo paramInfo in methodInfo.GetParameters())

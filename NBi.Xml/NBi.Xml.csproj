@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
@@ -10,7 +10,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>NBi.Xml</RootNamespace>
     <AssemblyName>NBi.Xml</AssemblyName>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
   </PropertyGroup>
@@ -46,6 +46,9 @@
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.ValueTuple, Version=4.0.3.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.ValueTuple.4.5.0\lib\net461\System.ValueTuple.dll</HintPath>
+    </Reference>
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -58,10 +61,46 @@
     </Compile>
     <Compile Include="Constraints\AbstractConstraintForCollectionXml.cs" />
     <Compile Include="Constraints\AbstractConstraintXml.cs" />
+    <Compile Include="Constraints\Comparer\IPredicateXml.cs" />
+    <Compile Include="Constraints\Comparer\SequenceReferencePredicateXml.cs" />
+    <Compile Include="Constraints\Comparer\ScalarReferencePredicateXml.cs" />
+    <Compile Include="Constraints\Comparer\ReferencePredicateXml.cs" />
+    <Compile Include="Constraints\LookupMatchesXml.cs" />
+    <Compile Include="Constraints\ScoreXml.cs" />
+    <Compile Include="Constraints\Comparer\ICultureSensitiveTextPredicateXml.cs" />
+    <Compile Include="Constraints\Comparer\ICaseSensitiveTextPredicateXml.cs" />
+    <Compile Include="Constraints\Comparer\IntegerXml.cs" />
+    <Compile Include="Constraints\Comparer\FalseXml.cs" />
+    <Compile Include="Constraints\Comparer\SecondOperandPredicateXml.cs" />
+    <Compile Include="Constraints\Comparer\MatchesTimeXml.cs" />
+    <Compile Include="Constraints\Comparer\MatchesNumericXml.cs" />
+    <Compile Include="Constraints\Comparer\MatchesDateXml.cs" />
+    <Compile Include="Constraints\Comparer\ModuloXml.cs" />
+    <Compile Include="Constraints\Comparer\TrueXml.cs" />
+    <Compile Include="Constraints\Comparer\OnTheHourXml.cs" />
+    <Compile Include="Constraints\Comparer\OnTheMinuteXml.cs" />
+    <Compile Include="Constraints\Comparer\OnTheDayXml.cs" />
+    <Compile Include="Constraints\Comparer\AnyOfXml.cs" />
+    <Compile Include="Constraints\Comparer\WithinRangeXml.cs" />
+    <Compile Include="Constraints\Comparer\UpperCaseXml.cs" />
+    <Compile Include="Constraints\Comparer\MatchesRegexXml.cs" />
+    <Compile Include="Constraints\Comparer\LowerCaseXml.cs" />
+    <Compile Include="Constraints\Comparer\StartsWithXml.cs" />
+    <Compile Include="Constraints\Comparer\EndsWithXml.cs" />
+    <Compile Include="Constraints\Comparer\ContainsXml.cs" />
+    <Compile Include="Constraints\Comparer\NullXml.cs" />
+    <Compile Include="Constraints\Comparer\EmptyXml.cs" />
+    <Compile Include="Constraints\LookupExistsXml.cs" />
+    <Compile Include="Constraints\SingleRowXml.cs" />
+    <Compile Include="Constraints\SomeRowsXml.cs" />
+    <Compile Include="Constraints\IntersectionOfXml.cs" />
+    <Compile Include="Constraints\UniqueRowsXml.cs" />
+    <Compile Include="Constraints\SubsetOfXml.cs" />
+    <Compile Include="Constraints\SupersetOfXml.cs" />
     <Compile Include="Constraints\NoRowsXml.cs" />
-    <Compile Include="Constraints\Comparer\AbstractComparerXml.cs" />
+    <Compile Include="Constraints\Comparer\PredicateXml.cs" />
     <Compile Include="Constraints\Comparer\EqualXml.cs" />
-    <Compile Include="Constraints\Comparer\AbstractMoreLessThanXml.cs" />
+    <Compile Include="Constraints\Comparer\MoreLessThanPredicateXml.cs" />
     <Compile Include="Constraints\Comparer\LessThanXml.cs" />
     <Compile Include="Constraints\Comparer\MoreThanXml.cs" />
     <Compile Include="Constraints\ContainXml.cs" />
@@ -72,21 +111,31 @@
     <Compile Include="Constraints\IReferenceFriendly.cs" />
     <Compile Include="Constraints\MatchPatternXml.cs" />
     <Compile Include="Constraints\EquivalentToXml.cs" />
-    <Compile Include="Constraints\SubsetOfXml.cs" />
+    <Compile Include="Constraints\ContainedInXml.cs" />
     <Compile Include="Constraints\ExistsXml.cs" />
     <Compile Include="Constraints\LinkedToXml.cs" />
     <Compile Include="Constraints\EvaluateRowsXml.cs" />
     <Compile Include="Decoration\Command\ConnectionWaitXml.cs" />
+    <Compile Include="Decoration\Command\CustomCommandParameterXml.cs" />
+    <Compile Include="Decoration\Command\CustomCommandXml.cs" />
+    <Compile Include="Decoration\Command\FileDeleteExtensionXml.cs" />
+    <Compile Include="Decoration\Command\FileCopyExtensionXml.cs" />
+    <Compile Include="Decoration\Command\FileDeletePatternXml.cs" />
+    <Compile Include="Decoration\Command\FileCopyPatternXml.cs" />
     <Compile Include="Decoration\Command\WaitXml.cs" />
     <Compile Include="Decoration\Command\ExeKillXml.cs" />
     <Compile Include="Decoration\Command\SqlRunXml.cs" />
     <Compile Include="Decoration\Command\FileCopyXml.cs" />
     <Compile Include="Decoration\Command\ExeRunXml.cs" />
-    <Compile Include="Decoration\Command\FileManipulationAbstractXml.cs" />
+    <Compile Include="Decoration\Command\IOAbstractXml.cs" />
     <Compile Include="Decoration\Command\FileDeleteXml.cs" />
     <Compile Include="Decoration\ConditionXml.cs" />
+    <Compile Include="Decoration\Condition\CustomConditionParameterXml.cs" />
     <Compile Include="Decoration\Condition\DecorationConditionXml.cs" />
-    <Compile Include="Decoration\Condition\ServiceRunningXml.cs" />
+    <Compile Include="Decoration\Condition\CustomConditionXml.cs" />
+    <Compile Include="Decoration\Condition\FolderExistsConditionXml.cs" />
+    <Compile Include="Decoration\Condition\FileExistsConditionXml.cs" />
+    <Compile Include="Decoration\Condition\ServiceRunningConditionXml.cs" />
     <Compile Include="Decoration\CleanupXml.cs" />
     <Compile Include="Decoration\Command\DataManipulationAbstractXml.cs" />
     <Compile Include="Decoration\Command\EtlRunXml.cs" />
@@ -97,12 +146,72 @@
     <Compile Include="Decoration\Command\ServiceStartXml.cs" />
     <Compile Include="Decoration\Command\ServiceStopXml.cs" />
     <Compile Include="Decoration\DecorationXml.cs" />
+    <Compile Include="Decoration\DecorationStandaloneXml.cs" />
     <Compile Include="Decoration\SetupXml.cs" />
     <Compile Include="Decoration\Command\CommandGroupXml.cs" />
     <Compile Include="GroupXml.cs" />
     <Compile Include="InheritanceTestXml.cs" />
+    <Compile Include="InstanceSettlingXml.cs" />
+    <Compile Include="Items\AbstractPredicationXml.cs" />
+    <Compile Include="Items\Alteration\AlterationXml.cs" />
+    <Compile Include="Items\Alteration\Conversion\AbstractConverterXml.cs" />
+    <Compile Include="Items\Alteration\Conversion\ConvertXml.cs" />
+    <Compile Include="Items\Alteration\Conversion\TextToDateConverterXml.cs" />
+    <Compile Include="Items\Alteration\Conversion\TextToNumericConverterXml.cs" />
+    <Compile Include="Items\Alteration\Conversion\TextToDateTimeConverterXml.cs" />
+    <Compile Include="Items\Alteration\Projection\ProjectXml.cs" />
+    <Compile Include="Items\Alteration\Projection\AbstractProjectionXml.cs" />
+    <Compile Include="Items\Alteration\Lookup\LookupReplaceXml.cs" />
+    <Compile Include="Items\Alteration\Lookup\MissingXml.cs" />
+    <Compile Include="Items\Alteration\Projection\ProjectAwayXml.cs" />
+    <Compile Include="Items\Alteration\Extension\ExtendXml.cs" />
+    <Compile Include="Items\Alteration\Renaming\MissingColumnXml.cs" />
+    <Compile Include="Items\Alteration\Renaming\RenamingXml.cs" />
+    <Compile Include="Items\Alteration\Reshaping\HeaderXml.cs" />
+    <Compile Include="Items\Alteration\Reshaping\UnstackXml.cs" />
+    <Compile Include="Items\Alteration\Transformation\LightTransformXml.cs" />
+    <Compile Include="Items\Api\Authentication\OAuth2Xml.cs" />
+    <Compile Include="Items\Api\Authentication\NtmlUserPasswordXml.cs" />
+    <Compile Include="Items\Api\Authentication\NtmlCurrentUserXml.cs" />
+    <Compile Include="Items\Api\Authentication\HttpBasicXml.cs" />
+    <Compile Include="Items\Api\Authentication\ApiKeyXml.cs" />
+    <Compile Include="Items\Api\Authentication\AnonymousXml.cs" />
+    <Compile Include="Items\Api\Authentication\BaseAuthenticationXml.cs" />
+    <Compile Include="Items\Api\Rest\AuthenticationXml.cs" />
+    <Compile Include="Items\Api\Rest\RestPathXml.cs" />
+    <Compile Include="Items\Api\Rest\RestSegmentXml.cs" />
+    <Compile Include="Items\Api\Rest\RestHeaderXml.cs" />
+    <Compile Include="Items\Api\Rest\RestParameterXml.cs" />
+    <Compile Include="Items\Api\Rest\RestXml.cs" />
+    <Compile Include="Items\Calculation\CombinationPredicationXml.cs" />
+    <Compile Include="Items\Calculation\Grouping\CaseXml.cs" />
+    <Compile Include="Items\EnvironmentXml.cs" />
+    <Compile Include="Items\Calculation\Grouping\GroupByXml.cs" />
+    <Compile Include="Items\Calculation\Ranking\BaseRankXml.cs" />
+    <Compile Include="Items\Calculation\Ranking\RankingXml.cs" />
     <Compile Include="Items\ColumnXml.cs" />
     <Compile Include="Items\ColumnsXml.cs" />
+    <Compile Include="Items\EtlBaseXml.cs" />
+    <Compile Include="Items\Filters\IOwnerFilter.cs" />
+    <Compile Include="Items\Hierarchical\Json\JsonFromXml.cs" />
+    <Compile Include="Items\Hierarchical\Json\JsonSourceXml.cs" />
+    <Compile Include="Items\Hierarchical\Json\JsonPathXml.cs" />
+    <Compile Include="Items\Hierarchical\Json\JsonSelectXml.cs" />
+    <Compile Include="Items\IfMissingXml.cs" />
+    <Compile Include="Items\ParserXml.cs" />
+    <Compile Include="Items\ProjectionOldXml.cs" />
+    <Compile Include="Items\QueryScalarXml.cs" />
+    <Compile Include="Items\ResultSet\Combination\SequenceCombinationXml.cs" />
+    <Compile Include="Items\ResultSet\EmptyResultSetXml.cs" />
+    <Compile Include="Items\ResultSet\IfUnavailableXml.cs" />
+    <Compile Include="Items\ResultSet\Lookup\ColumnUsingXml.cs" />
+    <Compile Include="Items\ResultSet\Lookup\ColumnMappingXml.cs" />
+    <Compile Include="Items\ResultSet\Lookup\InclusionXml.cs" />
+    <Compile Include="Items\ResultSet\Lookup\JoinXml.cs" />
+    <Compile Include="Items\Alteration\Summarization\AggregationXml.cs" />
+    <Compile Include="Items\Alteration\Summarization\SummarizeXml.cs" />
+    <Compile Include="Items\SharedDatasetXml.cs" />
+    <Compile Include="Items\Alteration\Transformation\TransformXml.cs" />
     <Compile Include="Items\UrlXml.cs" />
     <Compile Include="Items\Filters\IParameterDirectionFilter.cs" />
     <Compile Include="Items\Filters\IResultFilter.cs" />
@@ -161,16 +270,22 @@
     <Compile Include="Items\AbstractMembersItem.cs" />
     <Compile Include="Items\BaseItem.cs" />
     <Compile Include="Items\QueryXml.cs" />
-    <Compile Include="Items\Calculation\PredicateXml.cs" />
+    <Compile Include="Items\Calculation\SinglePredicationXml.cs" />
     <Compile Include="Items\Calculation\FilterXml.cs" />
     <Compile Include="Items\Calculation\ExpressionXml.cs" />
-    <Compile Include="Items\Calculation\VariableXml.cs" />
-    <Compile Include="Items\Xml\FromXml.cs" />
-    <Compile Include="Items\Xml\SelectXml.cs" />
-    <Compile Include="Items\Xml\XmlSourceXml.cs" />
-    <Compile Include="Items\Xml\XPathXml.cs" />
+    <Compile Include="Items\Calculation\AliasXml.cs" />
+    <Compile Include="Items\Hierarchical\Xml\DefaultNamespacePrefixXml.cs" />
+    <Compile Include="Items\Hierarchical\Xml\FromXml.cs" />
+    <Compile Include="Items\Hierarchical\Xml\SelectXml.cs" />
+    <Compile Include="Items\Hierarchical\Xml\XmlSourceXml.cs" />
+    <Compile Include="Items\Hierarchical\Xml\XPathXml.cs" />
     <Compile Include="LocalXmlUrlResolver.cs" />
+    <Compile Include="SerializationOption\CData.cs" />
+    <Compile Include="SerializationOption\ReadWriteAttributes.cs" />
+    <Compile Include="SerializationOption\WriteOnlyAttributes.cs" />
+    <Compile Include="Settings\ConnectionStringXml.cs" />
     <Compile Include="Settings\CsvProfileXml.cs" />
+    <Compile Include="Settings\SettingsStandaloneXml.cs" />
     <Compile Include="Settings\TraitXml.cs" />
     <Compile Include="Settings\UpdateXml.cs" />
     <Compile Include="Settings\EditionXml.cs" />
@@ -179,12 +294,14 @@
     <Compile Include="Settings\IgnoreXml.cs" />
     <Compile Include="Settings\ReferenceXml.cs" />
     <Compile Include="Settings\SettingsXml.cs" />
-    <Compile Include="SpecificReadAttributes.cs" />
+    <Compile Include="SerializationOption\ReadOnlyAttributes.cs" />
     <Compile Include="Systems\AbstractSystemUnderTestXml.cs" />
     <Compile Include="Constraints\CountXml.cs" />
     <Compile Include="Constraints\EqualToXml.cs" />
     <Compile Include="Items\AssemblyXml.cs" />
     <Compile Include="Items\AssemblyParameterXml.cs" />
+    <Compile Include="Systems\ScalarXml.cs" />
+    <Compile Include="Systems\ResultSetSystemXml.cs" />
     <Compile Include="Systems\MembersXml.cs" />
     <Compile Include="Constraints\SyntacticallyCorrectXml.cs" />
     <Compile Include="Constraints\FasterThanXml.cs" />
@@ -202,10 +319,23 @@
     <Compile Include="Systems\ExecutionXml.cs" />
     <Compile Include="TestSuiteXml.cs" />
     <Compile Include="Properties\ProjectAssemblyInfo.cs" />
+    <Compile Include="Variables\Custom\CustomParameterXml.cs" />
+    <Compile Include="Variables\Custom\CustomXml.cs" />
+    <Compile Include="Variables\DerivedVariableXml.cs" />
+    <Compile Include="Variables\InstanceVariableXml.cs" />
+    <Compile Include="Variables\ScriptXml.cs" />
+    <Compile Include="Variables\GlobalVariableXml.cs" />
+    <Compile Include="Variables\GlobalVariablesStandaloneXml.cs" />
+    <Compile Include="Variables\Sequence\FileLoopXml.cs" />
+    <Compile Include="Variables\Sequence\FilterSequenceXml.cs" />
+    <Compile Include="Variables\Sequence\PredicationSequenceXml.cs" />
+    <Compile Include="Variables\Sequence\SentinelLoopXml.cs" />
+    <Compile Include="Variables\Sequence\SequenceXml.cs" />
     <Compile Include="XmlBeautifier.cs" />
     <Compile Include="XmlManager.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="app.config" />
     <None Include="packages.config" />
     <EmbeddedResource Include="Schema\BaseType.xsd">
       <SubType>Designer</SubType>
@@ -231,11 +361,19 @@
       <SubType>Designer</SubType>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </EmbeddedResource>
+    <EmbeddedResource Include="Schema\Variables.xsd">
+      <SubType>Designer</SubType>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\NBi.Core\NBi.Core.csproj">
       <Project>{3F730647-FE31-4907-8A6E-A0C4A0C970EA}</Project>
       <Name>NBi.Core</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\NBi.Extensibility\NBi.Extensibility.csproj">
+      <Project>{a06cba63-d848-4dbc-abfc-63172613999d}</Project>
+      <Name>NBi.Extensibility</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup />

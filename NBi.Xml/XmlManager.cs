@@ -11,6 +11,7 @@ using NBi.Xml.Constraints;
 using NBi.Xml.Settings;
 using NBi.Xml.Decoration.Command;
 using System.Text.RegularExpressions;
+using NBi.Xml.SerializationOption;
 
 namespace NBi.Xml
 {
@@ -44,7 +45,7 @@ namespace NBi.Xml
         public virtual void Load(string testSuiteFilename, string settingsFilename, bool isDtdProcessing)
         {
             //define the basePath
-            basePath = System.IO.Path.GetDirectoryName(testSuiteFilename) + Path.DirectorySeparatorChar;
+            basePath = Path.GetDirectoryName(testSuiteFilename) + Path.DirectorySeparatorChar;
 
             //ensure the file is existing
             if (!File.Exists(testSuiteFilename))
@@ -59,10 +60,10 @@ namespace NBi.Xml
                 }
             }
 
-            //Load the settings eventually define in another file or in the config file.
+            //Load the settings optionally define in another file or in the config file.
             if (!string.IsNullOrEmpty(settingsFilename))
             {
-                var fullPath = System.IO.Path.IsPathRooted(settingsFilename) ? settingsFilename : basePath + settingsFilename;
+                var fullPath = Path.IsPathRooted(settingsFilename) ? settingsFilename : basePath + settingsFilename;
                 var settings = LoadSettings(fullPath);
                 TestSuite.Settings = settings;
             }
@@ -102,7 +103,7 @@ namespace NBi.Xml
             //Add the attributes that should only be used during read phase
             //These attributes are kept for compatibility with previous versions
             //They should never been used during write process
-            var attrs = new SpecificReadAttributes();
+            var attrs = new ReadOnlyAttributes();
             attrs.Build();
 
             // Create an instance of the XmlSerializer specifying type and read-attributes.
@@ -127,31 +128,29 @@ namespace NBi.Xml
                         var match = regex.Match(ex.InnerException.Message);
                         if (match.Success)
                         {
-                            int line = 0;
-                            Int32.TryParse(match.Groups[1].Value, out line);
-                            int position = 0;
-                            Int32.TryParse(match.Groups[2].Value, out position);
+                            Int32.TryParse(match.Groups[1].Value, out var line);
+                            Int32.TryParse(match.Groups[2].Value, out var position);
                             xmlSchemaException = new XmlSchemaException(ex.InnerException.Message, ex, line, position);
                         }
                         else
                             xmlSchemaException = new XmlSchemaException(ex.InnerException.Message);
-                            
+
                     }
                     Console.WriteLine(xmlSchemaException.Message);
                     validationExceptions.Add(xmlSchemaException);
-                    
+
                 }
                 else
                     ParseCascadingInvalidOperationException(ex.InnerException as InvalidOperationException);
             }
 
-            if (validationExceptions.Count>0)
+            if (validationExceptions.Count > 0)
             {
                 var message = "The test suite is not valid. Check with the XSD.";
                 message += string.Format(" {0} error{1} {2} been found during the validation of the test-suite:\r\n"
                                                 , validationExceptions.Count
-                                                , validationExceptions.Count>1 ? "s" : string.Empty
-                                                , validationExceptions.Count>1 ? "have" : "has");
+                                                , validationExceptions.Count > 1 ? "s" : string.Empty
+                                                , validationExceptions.Count > 1 ? "have" : "has");
 
                 foreach (var error in validationExceptions)
                     message += string.Format("\tAt line {0}: {1}\r\n", error.LineNumber, error.Message);
@@ -181,12 +180,17 @@ namespace NBi.Xml
         private XmlReaderSettings BuildXmlReaderBaseSettings(bool isDtdProcessing)
         {
             // Set the validation settings.
-            XmlReaderSettings settings = new XmlReaderSettings();
-
-            //Define the type/level of validation
-            settings.ValidationType = ValidationType.Schema;
+            XmlReaderSettings settings = new XmlReaderSettings
+            {
+                ValidationType = ValidationType.Schema,
+                DtdProcessing = isDtdProcessing ? DtdProcessing.Parse : DtdProcessing.Prohibit,
+                XmlResolver = new LocalXmlUrlResolver(basePath)
+                {
+                    Credentials = System.Net.CredentialCache.DefaultCredentials
+                }
+            };
             settings.ValidationFlags |= XmlSchemaValidationFlags.ReportValidationWarnings;
-            settings.ValidationEventHandler += delegate(object sender, ValidationEventArgs args)
+            settings.ValidationEventHandler += delegate (object sender, ValidationEventArgs args)
             {
                 if (args.Severity == XmlSeverityType.Warning)
                     Console.WriteLine("Validation warning: " + args.Message);
@@ -195,14 +199,6 @@ namespace NBi.Xml
 
                 validationExceptions.Add(args.Exception);
             };
-
-            //Allow DTD processing
-            settings.DtdProcessing = isDtdProcessing ? DtdProcessing.Parse : DtdProcessing.Prohibit;
-
-            // Supply the credentials necessary to access the DTD file stored on the network.
-            var resolver = new LocalXmlUrlResolver(basePath);
-            resolver.Credentials = System.Net.CredentialCache.DefaultCredentials;
-            settings.XmlResolver = resolver;
 
             return settings;
         }
@@ -223,7 +219,7 @@ namespace NBi.Xml
             var xmlReaderSettings = BuildXmlReaderBaseSettings(isDtdProcessing);
 
             //define XSD schemas to add 
-            var schemaSet = AddSchemas(new[] 
+            var schemaSet = AddSchemas(new[]
                                             {"NBi.Xml.Schema.BaseType.xsd"
                                             , "NBi.Xml.Schema.Cleanup.xsd"
                                             , "NBi.Xml.Schema.Setup.xsd"
@@ -250,17 +246,22 @@ namespace NBi.Xml
 
             //Create an empty XmlRoot.
             //This is needed because the class settingsXml is not decorated with an attribute "XmlRoot".
-            XmlRootAttribute xmlRoot = new XmlRootAttribute();
-            xmlRoot.ElementName = "settings";
-            xmlRoot.Namespace = "http://NBi/TestSuite";
-            xmlRoot.IsNullable = true;
+            XmlRootAttribute xmlRoot = new XmlRootAttribute
+            {
+                ElementName = "settings",
+                Namespace = "http://NBi/TestSuite",
+                IsNullable = true
+            };
 
             SettingsXml settings = null;
             // Create the XmlReader object.
             using (var xmlReader = BuildXmlReaderForSettings(settingsFilename, false))
             {
+                var overrides = new ReadOnlyAttributes();
+                overrides.Build();
+
                 // Create an instance of the XmlSerializer specifying type.
-                var serializer = new XmlSerializer(typeof(SettingsXml), xmlRoot);
+                var serializer = new XmlSerializer(typeof(SettingsXml), overrides, null, xmlRoot, string.Empty);
                 // Use the Deserialize method to restore the object's state.
                 settings = (SettingsXml)serializer.Deserialize(xmlReader);
             }
@@ -273,7 +274,7 @@ namespace NBi.Xml
             var xmlReaderSettings = BuildXmlReaderBaseSettings(isDtdProcessing);
 
             //define XSD schemas to add 
-            var schemaSet = AddSchemas(new[] 
+            var schemaSet = AddSchemas(new[]
                                             {"NBi.Xml.Schema.BaseType.xsd"
                                             , "NBi.Xml.Schema.Settings.xsd"}
                                         , "http://NBi/TestSuite");
@@ -318,6 +319,8 @@ namespace NBi.Xml
             foreach (var cmd in decorationCommands)
             {
                 cmd.Settings = TestSuite.Settings;
+                if (cmd is IReferenceFriendly && TestSuite.Settings != null)
+                    ((IReferenceFriendly)cmd).AssignReferences(TestSuite.Settings.References);
             }
         }
 
@@ -340,8 +343,12 @@ namespace NBi.Xml
 
         public void Persist(string filename, TestSuiteXml testSuite)
         {
+            //Overrides some attributes sepcifically for writting (mostly enforce CDATA)
+            var overrides = new WriteOnlyAttributes();
+            overrides.Build();
+
             // Create an instance of the XmlSerializer specifying type and namespace.
-            var serializer = new XmlSerializer(typeof(TestSuiteXml));
+            var serializer = new XmlSerializer(typeof(TestSuiteXml), overrides);
 
             using (var writer = new StreamWriter(filename, false, Encoding.UTF8))
             {
@@ -352,9 +359,7 @@ namespace NBi.Xml
         }
 
         protected internal string XmlSerializeFrom<T>(T objectData)
-        {
-            return SerializeFrom(objectData, typeof(T));
-        }
+            =>SerializeFrom(objectData, typeof(T));
 
         protected string SerializeFrom(object objectData, Type type)
         {
@@ -367,6 +372,41 @@ namespace NBi.Xml
                 result = writer.ToString();
             }
             return result;
+        }
+
+        protected internal string XmlSerializeFrom<T>(T objectData, ReadWriteAttributes attr)
+            =>  SerializeFrom(objectData, typeof(T), attr);
+
+        protected string SerializeFrom(object objectData, Type type, ReadWriteAttributes attr)
+        {
+            var serializer = new XmlSerializer(type, attr);
+            using (var writer = new StringWriter())
+            {
+                serializer.Serialize(writer, objectData);
+                return writer.ToString();
+            }
+        }
+
+        protected internal T XmlDeserializeTo<T>(string objectData)
+            => (T)DeserializeTo(objectData, typeof(T));
+
+        protected object DeserializeTo(string objectData, Type type)
+        {
+            var serializer = new XmlSerializer(type);
+            var result = string.Empty;
+            using (var reader = new StringReader(objectData))
+                return serializer.Deserialize(reader);
+        }
+
+        protected internal T XmlDeserializeTo<T>(string objectData, ReadWriteAttributes attr)
+            => (T)DeserializeTo(objectData, typeof(T), attr);
+
+        protected object DeserializeTo(string objectData, Type type, ReadWriteAttributes attr)
+        {
+            var serializer = new XmlSerializer(type, attr);
+            var result = string.Empty;
+            using (var reader = new StringReader(objectData))
+                return serializer.Deserialize(reader);
         }
     }
 }

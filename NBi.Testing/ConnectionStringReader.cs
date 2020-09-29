@@ -17,9 +17,29 @@ namespace NBi.Testing
         }
 
 
-        public static string GetOleDb()
+        public static string GetOleDbCube()
         {
-            return Get("OleDb");
+            return Get("OleDbCube");
+        }
+
+        public static string GetOleDbSql()
+        {
+            return Get("OleDbSql");
+        }
+
+        public static string GetOdbcSql()
+        {
+            return Get("OdbcSql");
+        }
+
+        public static string GetLocalOleDbSql()
+        {
+            return Get("LocalOleDbSql");
+        }
+
+        public static string GetLocalOdbcSql()
+        {
+            return Get("LocalOdbcSql");
         }
 
         public static string GetAdomd()
@@ -61,9 +81,14 @@ namespace NBi.Testing
             return Get("ReportServerDatabase");
         }
 
-        internal static string GetIntegrationServerDatabase()
+        internal static string GetIntegrationServer()
         {
-            return Get("IntegrationServerDatabase");
+            return Get("IntegrationServer");
+        }
+
+        internal static string GetIntegrationServerTargetDatabase()
+        {
+            return Get("IntegrationServerTargetDatabase");
         }
 
     }

@@ -15,14 +15,14 @@ namespace NBi.Testing.Acceptance.GenbiL
 
         #region SetUp & TearDown
         //Called only at instance creation
-        [TestFixtureSetUp]
+        [OneTimeSetUp]
         public void SetupMethods()
         {
 
         }
 
         //Called only at instance destruction
-        [TestFixtureTearDown]
+        [OneTimeTearDown]
         public void TearDownMethods()
         {
             
@@ -69,11 +69,11 @@ namespace NBi.Testing.Acceptance.GenbiL
                 Assert.Inconclusive("Test Suite not generated!");
 
             var content = File.ReadAllText(TargetFilename);
-            Assert.That(content.Count(c => c=='\r'), Is.LessThan(25));
+            Assert.That(content.Count(c => c=='\r'), Is.LessThan(26));
             content = content.Replace("\t", "").Replace("\r", "").Replace("\n", "").Replace(" ", "");
-            Assert.That(content, Is.StringContaining("<contain><item>first-dimension</item><item>second-dimension</item><item>exclude-dimension</item></contain>"));
-            Assert.That(content, Is.StringContaining("...\"><category>x</category><category>y</category><system-under-test>"));
-            Assert.That(content, Is.StringContaining("<structure><dimensionsperspective=\"first-perspective\"/></structure>"));
+            Assert.That(content, Does.Contain("<contain><item>first-dimension</item><item>second-dimension</item><item>exclude-dimension</item></contain>"));
+            Assert.That(content, Does.Contain("...\"><category>x</category><category>y</category><system-under-test>"));
+            Assert.That(content, Does.Contain("<structure><dimensionsperspective=\"first-perspective\"/></structure>"));
         }
 
     }
